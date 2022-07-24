@@ -7,7 +7,7 @@ def extract_file(my_file: str):
         for i in range(0, len(pdf.pages)):
             page = pdf.pages[i].extract_table()
             les_pages = les_pages + page
-    return page
+    return les_pages
 
 
 def extract_page_in_file(my_file: str, num_page: int):
