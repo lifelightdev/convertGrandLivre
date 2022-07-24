@@ -1,6 +1,5 @@
 import unittest
-
-from extract_table import extract_entete
+from extract_table import extract_entete, extract_compte
 
 
 class TestExtractTable(unittest.TestCase):
@@ -12,6 +11,12 @@ class TestExtractTable(unittest.TestCase):
 
         entete = extract_entete(table, 0)
         self.assertTrue(entete)
+
+    def test_extract_compte(self):
+        ligne = ['Compte : 103100 Avances de trésorerie', None, None, None, None, None, None, None, None, None]
+        compte = extract_compte(ligne, 1)
+        self.assertEqual(compte,'Compte : 103100 Avances de trésorerie')
+
 
 if __name__ == '__main__':
     unittest.main()
