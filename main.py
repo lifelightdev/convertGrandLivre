@@ -13,8 +13,7 @@ def main():
 
     # Création du dataframe de sortie
     dataFame_sortie = pandas.DataFrame(columns=["Compte", "Pièce", "Date", "Journal", "Intitulé du compte", "Libellé",
-                                                "N° facture", "Débit", "Crédit", "Solde Débit",
-                                                "Solde Crédit"])
+                                                "N° facture", "Débit", "Crédit", "Solde Débit", "Solde Crédit"])
     nombre_de_ligne_sortie = 1
     for nb in range(extract_nombre_de_page(args.file)):
         file = extract_page_in_file(args.file, nb)
@@ -26,8 +25,6 @@ def main():
                         if len(file[i][j]) == 10:
                             if extract_total(file[i][j]):
                                 montant = extact_total_montant(file[i][j][0])
-                                if montant[0] == '005480000101':
-                                    print(f"montant = {montant} et file[i][j] = {file[i][j]}")
                                 dataFame_sortie.loc[nombre_de_ligne_sortie] = [montant[0], "TOTAL DU COMPTE", "", "",
                                                                                liste_compte[montant[0]], "", "",
                                                                                montant[1], montant[2], montant[3],
@@ -49,7 +46,23 @@ def main():
                                                                                file[i][j][-1]]
                                 nombre_de_ligne_sortie = nombre_de_ligne_sortie + 1
 
-        print(f"page = {nb}")
+        #print(f"page = {nb}")
+
+    # Ecriture du dataframe de sortie
+    dataFame_sortie.to_csv(f"Grand_livre_sans_compte.csv", sep=';', encoding='ANSI', decimal=",", index=False)
+
+    compte = ''
+    libelle = ''
+    nombre_de_ligne_sortie = nombre_de_ligne_sortie - 1
+    while nombre_de_ligne_sortie > 0:
+        if dataFame_sortie["Pièce"][nombre_de_ligne_sortie] == "TOTAL DU COMPTE":
+            compte = dataFame_sortie["Compte"][nombre_de_ligne_sortie]
+            libelle = dataFame_sortie["Intitulé du compte"][nombre_de_ligne_sortie]
+        else:
+            dataFame_sortie["Compte"][nombre_de_ligne_sortie] = compte
+            dataFame_sortie["Intitulé du compte"][nombre_de_ligne_sortie] = libelle
+
+        nombre_de_ligne_sortie = nombre_de_ligne_sortie - 1
 
     # Ecriture du dataframe de sortie
     dataFame_sortie.to_csv(f"Grand_livre.csv", sep=';', encoding='ANSI', decimal=",", index=False)
