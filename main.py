@@ -1,7 +1,7 @@
 import argparse
 import pandas
-from extract_file import extract_file, extract_page_in_file, extract_nombre_de_page
-from extract_table import extract_compte, extract_total
+from extract_file import extract_page_in_file, extract_nombre_de_page, extract_liste_de_compte
+from extract_table import extract_total, extact_total_montant
 
 
 def main():
@@ -9,6 +9,7 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--file", action="store", required=True, help="Saisir le nom du fichier du grand livre")
     args = parser.parse_args()
+    liste_compte = extract_liste_de_compte(args.file)
 
     # Création du dataframe de sortie
     dataFame_sortie = pandas.DataFrame(columns=["Compte", "Pièce", "Date", "Journal", "Intitulé du compte", "Libellé",
@@ -25,9 +26,12 @@ def main():
                         if len(file[i][j]) == 10:
                             if extract_total(file[i][j]):
                                 montant = extact_total_montant(file[i][j][0])
+                                if montant[0] == '005480000101':
+                                    print(f"montant = {montant} et file[i][j] = {file[i][j]}")
                                 dataFame_sortie.loc[nombre_de_ligne_sortie] = [montant[0], "TOTAL DU COMPTE", "", "",
-                                                                               "", "", "", montant[1], montant[2],
-                                                                               montant[3], file[i][j][9]]
+                                                                               liste_compte[montant[0]], "", "",
+                                                                               montant[1], montant[2], montant[3],
+                                                                               file[i][j][9]]
                                 nombre_de_ligne_sortie = nombre_de_ligne_sortie + 1
                             else:
                                 dataFame_sortie.loc[nombre_de_ligne_sortie] = ["", file[i][j][0], file[i][j][1],
@@ -40,8 +44,9 @@ def main():
                             if extract_total(file[i][j]):
                                 montant = extact_total_montant(file[i][j][0])
                                 dataFame_sortie.loc[nombre_de_ligne_sortie] = [montant[0], "TOTAL DU COMPTE", "", "",
-                                                                               "", "", "", montant[1], montant[2],
-                                                                               montant[3], file[i][j][-1]]
+                                                                               liste_compte[montant[0]], "", "",
+                                                                               montant[1], montant[2], montant[3],
+                                                                               file[i][j][-1]]
                                 nombre_de_ligne_sortie = nombre_de_ligne_sortie + 1
 
         print(f"page = {nb}")
@@ -62,20 +67,6 @@ def ligne_null(ligne):
     if ['', None, None, None, None, None, None, None, None, None, None, None] == ligne:
         return True
     return False
-
-def extact_total_montant(ligne):
-    compte = ligne[18:].split()[0]
-    montants = ligne[18:].split()
-    montants.remove(compte)
-    retour = [compte]
-    montant = ''
-    for nombre in range(0, len(montants)):
-        if montants[nombre].find(',') > 0:
-            retour.append(montant + montants[nombre])
-            montant = ''
-        else:
-            montant = montant + montants[nombre]
-    return retour
 
 
 if __name__ == '__main__':
