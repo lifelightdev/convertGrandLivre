@@ -19,3 +19,15 @@ def extact_total_montant(ligne):
         else:
             montant = montant + montants[nombre]
     return retour
+
+def extact_total_grand_livre(ligne):
+    montants = ligne[28:].split()
+    retour = []
+    montant = ''
+    for nombre in range(0, len(montants)):
+        if montants[nombre].find(',') > 0:
+            retour.append(montant + montants[nombre])
+            montant = ''
+        else:
+            montant = montant + montants[nombre]
+    return retour
