@@ -88,6 +88,8 @@ def main():
             compte = dataFame_sortie["Compte"][nombre_de_ligne_sortie]
             libelle = dataFame_sortie["Intitulé du compte"][nombre_de_ligne_sortie]
         else:
+            if libelle.startswith(' Copropriétaire M', 0, 17):
+                compte = '450' + compte
             dataFame_sortie["Compte"][nombre_de_ligne_sortie] = compte
             dataFame_sortie["Intitulé du compte"][nombre_de_ligne_sortie] = libelle
 
