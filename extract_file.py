@@ -1,5 +1,6 @@
 import pdfplumber
 import re
+import pandas
 
 table_settings = {
     "horizontal_strategy": "text"
@@ -33,6 +34,9 @@ def extract_liste_de_compte(my_file: str):
     libelle = ''
     trouve_compte = False
     fin_libelle = True
+    dataFame_liste_compte = pandas.DataFrame(columns=["Compte", "Intitulé du compte"])
+    nombre_de_compte = 0
+
     with pdfplumber.open(my_file) as pdf:
         for page in pdf.pages:
             text = page.extract_text().split()
@@ -49,10 +53,22 @@ def extract_liste_de_compte(my_file: str):
                                     compte = valeur
                                 else:
                                     if PATTERN_PIECE.match(valeur) is None:
-                                        libelle = libelle + ' ' + valeur
+                                        if valeur == 'Edité':
+                                            trouve_compte = False
+                                            fin_libelle = True
+                                            retour[compte] = libelle
+                                            nombre_de_compte = nombre_de_compte + 1
+                                            dataFame_liste_compte.loc[nombre_de_compte] = [compte, libelle]
+                                            libelle = ''
+                                        else:
+                                            libelle = libelle + ' ' + valeur
                                     else:
                                         trouve_compte = False
                                         fin_libelle = True
                                         retour[compte] = libelle
+                                        nombre_de_compte = nombre_de_compte + 1
+                                        dataFame_liste_compte.loc[nombre_de_compte] = [compte, libelle]
                                         libelle = ''
+    # Ecriture du dataframe de sortie
+    dataFame_liste_compte.to_csv(f"Etape_1_liste_des_comptes.csv", sep=';', encoding='ANSI', decimal=",", index=False)
     return retour
