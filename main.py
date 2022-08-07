@@ -9,7 +9,7 @@ from extract_table import extract_total, extact_total_montant, extact_total_gran
 PATTERN_PIECE = re.compile("[0-9]{6}/[0-9]{2}/[0-9]{2}")
 
 def main():
-    # python -m main --file 'Grand_livre de test.pdf --etape '1'
+    # python -m main --file 'Grand_livre de test.pdf' --etape '1'
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--file", action="store", required=True, help="Saisir le nom du fichier du grand livre")
     parser.add_argument("--etape", action="store", required=False, help="Saisir le nom du fichier du grand livre")
@@ -28,12 +28,9 @@ def main():
 
     compte, fin_etape_3 = etape_3_add_count(df_sortie, fin_etape_2, nombre_de_ligne_sortie)
 
-    etape_4_total(compte, df_sortie, fin_etape_3)
+    df_sortie, fin_etape_4 = etape_4_total(compte, df_sortie, fin_etape_3)
 
-    liste_journaux = df_sortie.Journal.unique()
-    df_journaux = df_sortie.sort_values('Journal')
-    print(f"df_journaux = {df_journaux}")
-    df_journaux.to_csv("journaux.csv")
+    etape_5_journaux(df_sortie, fin_etape_4)
 
     fin = datetime.today()
     print(f"Fin à {fin} pour une durée de {fin - debut}")
@@ -44,7 +41,7 @@ def etape_1_find_count_list(file):
     print(f"Début de l'étape 1 (recherche des comptes et leurs libellé) à {debut}")
     liste_compte = extract_liste_de_compte(file)
     fin_etape_1 = datetime.today()
-    print(f"Fin de l'étape 1 {fin_etape_1} d'une durée de {fin_etape_1 - debut}")
+    print(f"Fin de l'étape 1 (recherche des comptes et leurs libellé) {fin_etape_1} d'une durée de {fin_etape_1 - debut}")
     return debut, fin_etape_1, liste_compte
 
 
@@ -54,10 +51,6 @@ def etape_2_create_df(file_name, fin_etape_1, liste_compte):
                                           "N° facture", "Débit", "Crédit", "Solde Débit", "Solde Crédit",
                                           "Message Débit/Crédit", "Message Solde Débit", "Message Solde Crédit"])
     nb_ligne_sortie = 1
-    solde_debit = 0
-    solde_crebit = 0
-    solde_total_debit = 0
-    solde_total_credit = 0
     for nb in range(extract_nombre_de_page(file_name)):
         file = extract_page_in_file(file_name, nb)
         for i in range(0, len(file)):
@@ -119,31 +112,11 @@ def etape_2_create_df(file_name, fin_etape_1, liste_compte):
                                 nb_ligne_sortie, solde_crebit, solde_debit = ajout_ligne_total(df_sortie, file, i, j,
                                                                                                liste_compte,
                                                                                                nb_ligne_sortie, 1)
-                        solde_ligne = convert_montant(df_sortie['Crédit'][nb_ligne_sortie - 1]) - convert_montant(df_sortie['Débit'][nb_ligne_sortie - 1])
-                        if df_sortie["Libellé"][nb_ligne_sortie - 1] != "TOTAL DU COMPTE":
-                            if solde_ligne > 0:
-                                if solde_debit > 0:
-                                    solde_crebit = solde_crebit + solde_ligne
-                                    solde_debit = 0
-                                else:
-                                    solde_crebit = solde_crebit + solde_ligne - solde_debit
-                                    solde_debit = 0
-                            else:
-                                if solde_crebit > 0:
-                                    solde_debit = solde_debit + solde_ligne - solde_crebit
-                                    solde_crebit = 0
-                                else:
-                                    solde_crebit = solde_crebit - solde_ligne
-                                    solde_debit = 0
-                        df_sortie['Message Solde Débit'][nb_ligne_sortie - 1] = - solde_debit
-                        df_sortie['Message Solde Crédit'][nb_ligne_sortie - 1] = solde_crebit
-
-
         # print(f"page = {nb}")
     fin_etape_2 = datetime.today()
     print(f"Fin de l'étape 2 (la création du fichier) à {fin_etape_2} pour une durée de {fin_etape_2 - fin_etape_1}")
     # Ecriture du dataframe de sortie
-    df_sortie.to_csv(f"Etape_2_Grand_livre_sans_compte.csv", sep=';', encoding='ANSI', decimal=",", index=False)
+    df_sortie.to_csv("Etape_2_Grand_livre_sans_compte.csv", sep=';', encoding='ANSI', decimal=",", index=False)
     return df_sortie, fin_etape_2, nb_ligne_sortie
 
 
@@ -187,50 +160,136 @@ def etape_4_total(compte, dataFame_sortie, fin_etape_3):
     total_complet_debit = 0
     total_complet_credit = 0
     message = ''
+    message_solde = ''
     for index in dataFame_sortie.index:
         if compte == dataFame_sortie["Compte"][index]:
             if dataFame_sortie["Libellé"][index] == "TOTAL DU COMPTE":
-                total_debit = round(float(total_debit), 2)
-                total_credit = round(float(total_credit), 2)
-                if float(total_debit) != convert_montant(dataFame_sortie["Débit"][index]):
-                    message = f"{message}Le total des débits ({float(total_debit)}) " \
-                              f"n'est pas égale au total du grand livre " \
-                              f"({convert_montant(dataFame_sortie['Débit'][index])}) \n"
-                if float(total_credit) != convert_montant(dataFame_sortie["Crédit"][index]):
-                    message = f"{message}Le total des crédits ({total_credit}) " \
-                              f"n'est pas égale au total du grand livre ({dataFame_sortie['Crédit'][index]}) \n"
+                compte, message, total_complet_credit, total_complet_debit, total_credit, total_debit = verif_totaux_compte(
+                    compte, dataFame_sortie, index, message, total_complet_credit, total_complet_debit, total_credit,
+                    total_debit)
+                if(total_debit > total_credit):
+                    if dataFame_sortie["Solde Débit"][index] == (total_debit - total_credit):
+                        message_solde = 'OK'
+                    else:
+                        message_solde = f"{message}Solde des débits ({float(total_debit - total_credit)}) " \
+                                  f"n'est pas égale au solde du grand livre = " \
+                                  f"({convert_montant(dataFame_sortie['Solde Débit'][index])}) \n"
+                if (total_credit > total_debit):
+                    if dataFame_sortie["Solde Crédit"][index] != (total_credit - total_debit):
+                        message_solde = f"{message}Solde des crédits ({float(total_credit - total_debit)}) " \
+                                  f"n'est pas égale au solde du grand livre = " \
+                                  f"({convert_montant(dataFame_sortie['Solde Crédit'][index])}) \n"
                 if len(message) > 0:
-                    dataFame_sortie['Message Débit/Crédit'][index] = message
+                    dataFame_sortie['Message Solde Débit'][index] = message_solde
+                    dataFame_sortie['Message Solde Crédit'][index] = message_solde
                 else:
-                    dataFame_sortie['Message Débit/Crédit'][index] = 'OK'
-                total_complet_debit = total_complet_debit + total_debit
-                total_complet_credit = total_complet_credit + total_credit
-                total_debit = 0
-                total_credit = 0
-                message = ''
-                compte = dataFame_sortie["Compte"][index + 1]
+                    dataFame_sortie['Message Solde Débit'][index] = 'OK'
+                    dataFame_sortie['Message Solde Crédit'][index] = 'OK'
             elif dataFame_sortie["Libellé"][index] == 'Total Général du Grand-Livre':
-                total_complet_debit = round(total_complet_debit, 2)
-                total_complet_credit = round(total_complet_credit, 2)
-                if float(total_complet_debit) != convert_montant(dataFame_sortie["Débit"][index]):
-                    message = f"{message}Le total des débits ({float(total_complet_debit)}) " \
-                              f"n'est pas égale au total du grand livre " \
-                              f"({convert_montant(dataFame_sortie['Débit'][index])}) \n"
-                if float(total_complet_credit) != convert_montant(dataFame_sortie["Crédit"][index]):
-                    message = f"{message}Le total des crédits ({total_complet_credit}) " \
-                              f"n'est pas égale au total du grand livre ({dataFame_sortie['Crédit'][index]}) \n"
+                message, total_complet_credit, total_complet_debit = verif_totaux_grand_livre(dataFame_sortie, index,
+                                                                                              message,
+                                                                                              total_complet_credit,
+                                                                                              total_complet_debit)
+                if (total_complet_debit > total_complet_credit):
+                    if dataFame_sortie["Solde Débit"][index] == (total_complet_debit - total_complet_credit):
+                        message_solde = 'OK'
+                    else:
+                        message_solde = f"{message}Solde général des débits ({float(total_complet_debit - total_complet_credit)}) " \
+                                        f"n'est pas égale au solde du grand livre = " \
+                                        f"({convert_montant(dataFame_sortie['Solde Débit'][index])}) \n"
+                if (total_complet_credit > total_complet_debit):
+                    if dataFame_sortie["Solde Crédit"][index] != (total_complet_credit - total_complet_debit):
+                        message_solde = f"{message}Solde général des crédits ({float(total_complet_credit - total_complet_debit)}) " \
+                                        f"n'est pas égale au solde du grand livre = " \
+                                        f"({convert_montant(dataFame_sortie['Solde Crédit'][index])}) \n"
                 if len(message) > 0:
-                    dataFame_sortie['Message Débit/Crédit'][index] = message
+                    dataFame_sortie['Message Solde Débit'][index] = message_solde
+                    dataFame_sortie['Message Solde Crédit'][index] = message_solde
                 else:
-                    dataFame_sortie['Message Débit/Crédit'][index] = 'OK'
+                    dataFame_sortie['Message Solde Débit'][index] = 'OK'
+                    dataFame_sortie['Message Solde Crédit'][index] = 'OK'
             else:
                 total_debit = total_debit + convert_montant(dataFame_sortie['Débit'][index])
                 total_credit = total_credit + convert_montant(dataFame_sortie['Crédit'][index])
     fin_etape_4 = datetime.today()
     print(f"Fin de l'étape 4 (vérification des totaux) à {fin_etape_4} pour une durée de {fin_etape_4 - fin_etape_3}")
     # Ecriture du dataframe de sortie
-    dataFame_sortie.to_csv(f"Grand_livre.csv", sep=';', encoding='ANSI', decimal=",", index=False)
-    return dataFame_sortie
+    dataFame_sortie.to_csv("Grand_livre.csv", sep=';', encoding='ANSI', decimal=",", index=False)
+    return dataFame_sortie, fin_etape_4
+
+
+def verif_totaux_grand_livre(dataFame_sortie, index, message, total_complet_credit, total_complet_debit):
+    total_complet_debit = round(total_complet_debit, 2)
+    total_complet_credit = round(total_complet_credit, 2)
+    if float(total_complet_debit) != convert_montant(dataFame_sortie["Débit"][index]):
+        message = f"{message}Le total des débits ({float(total_complet_debit)})  n'est pas égale au total du grand livre  ({convert_montant(dataFame_sortie['Débit'][index])}) \n"
+    if float(total_complet_credit) != convert_montant(dataFame_sortie["Crédit"][index]):
+        message = f"{message}Le total des crédits ({total_complet_credit}) n'est pas égale au total du grand livre ({dataFame_sortie['Crédit'][index]}) \n"
+    if len(message) > 0:
+        dataFame_sortie['Message Débit/Crédit'][index] = message
+    else:
+        dataFame_sortie['Message Débit/Crédit'][index] = 'OK'
+    return message, total_complet_credit, total_complet_debit
+
+
+def verif_totaux_compte(compte, dataFame_sortie, index, message, total_complet_credit, total_complet_debit,
+                        total_credit, total_debit):
+    total_debit = round(float(total_debit), 2)
+    total_credit = round(float(total_credit), 2)
+    if float(total_debit) != convert_montant(dataFame_sortie["Débit"][index]):
+        message = f"{message}Le total des débits ({float(total_debit)}) n'est pas égale au total du grand livre = " \
+                  f"({convert_montant(dataFame_sortie['Débit'][index])}) \n"
+    if float(total_credit) != convert_montant(dataFame_sortie["Crédit"][index]):
+        message = f"{message}Le total des crédits ({total_credit}) n'est pas égale au total du grand livre " \
+                  f"({dataFame_sortie['Crédit'][index]}) \n"
+    if len(message) > 0:
+        dataFame_sortie['Message Débit/Crédit'][index] = message
+    else:
+        dataFame_sortie['Message Débit/Crédit'][index] = 'OK'
+    total_complet_debit = total_complet_debit + total_debit
+    total_complet_credit = total_complet_credit + total_credit
+    total_debit = 0
+    total_credit = 0
+    message = ''
+    compte = dataFame_sortie["Compte"][index + 1]
+    return compte, message, total_complet_credit, total_complet_debit, total_credit, total_debit
+
+
+def etape_5_journaux(df_sortie, fin_etape_4):
+    liste_journaux = df_sortie.Journal.unique()
+    df_journaux = df_sortie.sort_values('Journal')
+    journal = ''
+    index_nb_ligne_journal = 0
+    df_journal = pandas.DataFrame(columns=["Compte", "Intitulé du compte", "Pièce", "Date", "Libellé",
+                                          "N° facture", "Débit", "Crédit"])
+    for index in df_journaux.index:
+        if df_journaux["Journal"][index] != '':
+            print(f" df_journaux['Journal'][{index}] = {df_journaux['Journal'][index]}")
+            if journal != '':
+                if journal != df_journaux["Journal"][index]:
+                    df_journal.loc[index_nb_ligne_journal] = [df_journaux["Compte"][index],
+                                                              df_journaux["Intitulé du compte"][index],
+                                                              df_journaux["Pièce"][index], df_journaux["Date"][index],
+                                                              df_journaux["Libellé"][index],
+                                                              df_journaux["N° facture"][index],
+                                                              df_journaux["Débit"][index], df_journaux["Crédit"][index]]
+                    index_nb_ligne_journal = index_nb_ligne_journal + 1
+                else:
+                    print(f"Ecriture du journal : {df_journal}")
+                    df_journal.to_csv(f"journals_{journal}.csv", sep=';', encoding='ANSI', decimal=",", index=False)
+                    journal = df_journaux["Journal"][index]
+                    df_journal = pandas.DataFrame(columns=["Compte", "Intitulé du compte", "Pièce", "Date", "Libellé",
+                                                           "N° facture", "Débit", "Crédit"])
+                    index_nb_ligne_journal = 0
+            else:
+                journal = df_journaux["Journal"][index]
+                print(f"journal = {df_sortie}")
+                df_journal = pandas.DataFrame(columns=["Compte", "Intitulé du compte", "Pièce", "Date", "Libellé",
+                                                       "N° facture", "Débit", "Crédit"])
+                index_nb_ligne_journal = 0
+    fin_etape_5 = datetime.today()
+    print(f"Fin de l'étape 5 (Ecriture des jaournaux) à {fin_etape_5} pour une durée de {fin_etape_5 - fin_etape_4}")
+    df_journaux.to_csv("journaux.csv", sep=';', encoding='ANSI', decimal=",", index=False)
 
 
 def ligne_null(ligne):
