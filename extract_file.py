@@ -1,12 +1,11 @@
 import pdfplumber
-import re
 import pandas
+from constante import PATTERN_PIECE, DOSSIER_ETAPE, SEPARATEUR_CSV, ENCODING, DECIMAL
 
 table_settings = {
-    "horizontal_strategy": "text"
+    "horizontal_strategy": "lines"
 }
 
-PATTERN_PIECE = re.compile("[0-9]{6}/[0-9]{2}/[0-9]{2}")
 
 def extract_file(my_file: str):
     les_pages = []
@@ -14,7 +13,7 @@ def extract_file(my_file: str):
         for i in range(0, len(pdf.pages)):
             page = pdf.pages[i].extract_tables(table_settings)
             les_pages = les_pages + page
-    print(f"Il y a {len(pdf.pages)} pages.")
+    print(f"Il y a {len(pdf.pages)} pages dans le fichier PDF.")
     return les_pages
 
 
@@ -30,13 +29,11 @@ def extract_nombre_de_page(my_file: str):
     return nombre
 
 def extract_liste_de_compte(my_file: str):
-    retour = {}
     libelle = ''
     trouve_compte = False
     fin_libelle = True
-    dataFame_liste_compte = pandas.DataFrame(columns=["Compte", "Intitulé du compte"])
+    df_liste_compte = pandas.DataFrame(columns=["Compte", "Intitulé du compte"])
     nombre_de_compte = 0
-
     with pdfplumber.open(my_file) as pdf:
         for page in pdf.pages:
             text = page.extract_text().split()
@@ -50,25 +47,26 @@ def extract_liste_de_compte(my_file: str):
                         if valeur != ':':
                             if valeur != compte:
                                 if text[index - 2] == 'Copropriétaire':
-                                    compte = valeur
+                                    compte = f"450{int(valeur)}"
                                 else:
                                     if PATTERN_PIECE.match(valeur) is None:
                                         if valeur == 'Edité':
                                             trouve_compte = False
                                             fin_libelle = True
-                                            retour[compte] = libelle
                                             nombre_de_compte = nombre_de_compte + 1
-                                            dataFame_liste_compte.loc[nombre_de_compte] = [compte, libelle]
+                                            df_liste_compte.loc[nombre_de_compte] = [compte, libelle]
                                             libelle = ''
                                         else:
                                             libelle = libelle + ' ' + valeur
+                                            libelle = libelle.lstrip()
                                     else:
                                         trouve_compte = False
                                         fin_libelle = True
-                                        retour[compte] = libelle
                                         nombre_de_compte = nombre_de_compte + 1
-                                        dataFame_liste_compte.loc[nombre_de_compte] = [compte, libelle]
+                                        df_liste_compte.loc[nombre_de_compte] = [compte, libelle]
                                         libelle = ''
+
     # Ecriture du dataframe de sortie
-    dataFame_liste_compte.to_csv(f"Etape_1_liste_des_comptes.csv", sep=';', encoding='ANSI', decimal=",", index=False)
-    return retour
+    df_liste_compte.to_csv(f"{DOSSIER_ETAPE}/Etape_1_liste_des_comptes.csv", sep=SEPARATEUR_CSV, encoding=ENCODING,
+                           decimal=DECIMAL, index=False)
+    return df_liste_compte
