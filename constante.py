@@ -7,8 +7,9 @@ DECIMAL = ','
 DOSSIER_ETAPE = 'Etape'
 DOSSIER_SORTIE = 'Sortie'
 
-COLUMNS_NAME = ["Compte", "Intitulé du compte", "Pièce", "Date", "Journal", "Libellé", "N° facture", "Débit", "Crédit",
-                "Solde Débit", "Solde Crédit", "Vérification Débit/Crédit", "Vérification Solde"]
+COLUMNS_NAME = ["Compte", "Intitulé du compte", "Pièce", "Date", "Journal", "Libellé", "N° facture", "Contre partie",
+                "N° chèque", "Débit", "Crédit", "Solde Débit", "Solde Crédit", "Vérification Débit/Crédit",
+                "Vérification Solde"]
 
-COLUMNS_NAME_COMPTE = ["Compte", "Intitulé du compte", "Pièce", "Date", "Journal", "Libellé", "N° facture", "Débit",
-                       "Crédit", "Solde"]
+COLUMNS_NAME_COMPTE = ["Compte", "Intitulé du compte", "Pièce", "Date", "Journal", "Libellé", "N° facture",
+                       "Contre partie", "N° chèque","Débit", "Crédit", "Solde"]
