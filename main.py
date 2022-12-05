@@ -9,7 +9,8 @@ from etape_4 import etape_4_extract_compte
 from etape_5 import etape_5_total
 from etape_6 import etape_6_journaux
 from extract_file import extract_file
-from outil import nb_colonne, colums_name, find_debit, find_journal_contre_partie_num_cheque
+from outil import nb_colonne, colums_name, find_journal_contre_partie_num_cheque, add_line_total,  \
+    find_intitule_du_compte, extract_debit, extract_credit
 
 
 def main():
@@ -27,10 +28,9 @@ def main():
     args = parser.parse_args()
     file_name = args.file
 
-    if args.copro == 'XXXX':
+    if args.copro == 'XXXXX':
         liste = extract_file(file_name)
         nombre_de_colonne = nb_colonne(liste)
-        print(f"Il y a {nombre_de_colonne} colonnes dans le fichier CSV (soit lignes dans une page du PDF)")
         list_of_name_colums = colums_name(nombre_de_colonne)
         df_fichier = pandas.DataFrame(liste, columns = list_of_name_colums)
         # df_fichier.to_csv(f"fichier.csv", sep=SEPARATEUR_CSV, encoding=ENCODING, decimal=DECIMAL, index=False)
@@ -46,31 +46,28 @@ def main():
 
         for page in range(0, len(liste)):
             for index in range(5, len(liste[page])):
+                nb_ligne_sortie, df_sortie = add_line_total(df_fichier, df_sortie, index, nb_ligne_sortie, page, 7)
+                nb_ligne_sortie, df_sortie = add_line_total(df_fichier, df_sortie, index, nb_ligne_sortie, page, 9)
+                nb_ligne_sortie, df_sortie = add_line_total(df_fichier, df_sortie, index, nb_ligne_sortie, page, 10)
                 if (df_fichier.iloc[page][index])[4]  != None:
                     date = (df_fichier.iloc[page][index])[2]
                     if date == None or date == 'Date':
                         compte_nouvel_ligne = (df_fichier.iloc[page][index])[4]
                         if compte != compte_nouvel_ligne and compte_nouvel_ligne != 'Compte':
                             compte = compte_nouvel_ligne
-                            intitule_du_compte = ''
-                            if (df_fichier.iloc[page][index])[6] != None:
-                                intitule_du_compte = (df_fichier.iloc[page][index])[6]
-                            if (df_fichier.iloc[page][index])[7] != None:
-                                intitule_du_compte = intitule_du_compte + (df_fichier.iloc[page][index])[7]
-                            if (df_fichier.iloc[page][index])[8] != None:
-                                intitule_du_compte = intitule_du_compte + (df_fichier.iloc[page][index])[8]
+                            intitule_du_compte = find_intitule_du_compte(df_fichier, index, page)
                             df_liste_compte.loc[nombre_de_compte] = [compte, intitule_du_compte]
                             nombre_de_compte = nombre_de_compte + 1
                     else:
                         piece = (df_fichier.iloc[page][index])[0]
                         libelle = (df_fichier.iloc[page][index])[len(df_fichier.iloc[page][index])-8]
-                        journal, contre_partie, num_cheque = find_journal_contre_partie_num_cheque(df_fichier, index, page)
+                        journal, contre_partie, num_cheque = find_journal_contre_partie_num_cheque(df_fichier, index,
+                                                                                                   page)
                         if libelle == None:
                             libelle = (df_fichier.iloc[page][index])[len(df_fichier.iloc[page][index])-9]
                         num_facture = 'Sans objet'
-                        debit = (df_fichier.iloc[page][index])[len(df_fichier.iloc[page][index]) - 4]
-                        debit = find_debit(debit)
-                        credit = (df_fichier.iloc[page][index])[len(df_fichier.iloc[page][index])-2]
+                        debit = extract_debit(df_fichier, index, page)
+                        credit = extract_credit(df_fichier, index, page)
                         solde_debit = 0
                         solde_crebit = 0
                         verification_debit_credit = ''
@@ -81,8 +78,35 @@ def main():
                                                           verification_solde ]
                         nb_ligne_sortie = nb_ligne_sortie + 1
 
-        df_sortie.to_csv(f"Grand_livre_{nom_du_syndic}.csv", sep=SEPARATEUR_CSV, encoding=ENCODING, decimal=DECIMAL, index=False)
-        df_liste_compte.to_csv(f"Liste_des_comptes_{nom_du_syndic}.csv", sep=SEPARATEUR_CSV, encoding=ENCODING, decimal=DECIMAL, index=False)
+        df_sortie.to_csv(f"Grand_livre_{nom_du_syndic}.csv", sep=SEPARATEUR_CSV, encoding=ENCODING, decimal=DECIMAL,
+                         index=False)
+
+        writer = pandas.ExcelWriter(f"Grand_livre{nom_du_syndic}.xlsx")
+        df_sortie.to_excel(writer, 'Feuille1', encoding=ENCODING, header=True, index=False, index_label=None,
+                                 freeze_panes=(1, 1))
+        workbook = writer.book
+        worksheet = writer.sheets['Feuille1']
+        number_format = workbook.add_format({'num_format': '#,##0.00'})
+        cell_format = workbook.add_format({'bold': True, 'num_format': '#,##0.00'})
+        text_format = workbook.add_format({'num_format': '@'})
+        # for index in ids_ligne_totaux:
+        #     worksheet.set_row(index, None, cell_format)
+        worksheet.set_column('A:A', 15, text_format)  # Compte
+        worksheet.set_column('B:B', max(df_sortie['Intitulé du compte'].str.len()))  # Intituleé du compte
+        worksheet.set_column('C:C', max(df_sortie['Pièce'].str.len())*2)  # Piéce
+        worksheet.set_column('D:D', 13)  # Date
+        worksheet.set_column('E:E', 10)  # Journal
+        worksheet.set_column('F:F', max(df_sortie['Libellé'].str.len())*2)  # Libellé
+        worksheet.set_column('G:G', 13)  # Facture
+        worksheet.set_column('H:H', 13)  # Contre partie
+        worksheet.set_column('I:I', 13)  # N° chèque
+        worksheet.set_column('J:M', 13, number_format)  # Montants
+        worksheet.set_column('L:L', 10, number_format)  # Vérification Débit/Crédit
+        worksheet.set_column('M:M', 10, number_format)  # Vérification Solde
+        writer.save()
+
+        df_liste_compte.to_csv(f"Liste_des_comptes_{nom_du_syndic}.csv", sep=SEPARATEUR_CSV, encoding=ENCODING,
+                               decimal=DECIMAL, index=False)
 
     else:
         etape1 = args.etape1

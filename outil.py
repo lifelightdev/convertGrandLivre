@@ -67,3 +67,39 @@ def find_journal_contre_partie_num_cheque(df_fichier, index, page):
             contre_partie = ''
             num_cheque = ''
     return journal, contre_partie, num_cheque
+
+
+def add_line_total(df_fichier, df_sortie, index, nb_ligne_sortie, page, index_total):
+    total = (df_fichier.iloc[page][index])[index_total]
+    if total is not None:
+        if total.find('Total') >= 0:
+            debit = extract_debit(df_fichier, index, page)
+            credit = extract_credit(df_fichier, index, page)
+            df_sortie.loc[nb_ligne_sortie] = ['', '', '', '', '', total, '', '', '', debit, credit, '', '', '', '']
+            nb_ligne_sortie = nb_ligne_sortie + 1
+    return nb_ligne_sortie, df_sortie
+
+
+def find_intitule_du_compte(df_fichier, index, page):
+    intitule_du_compte = ''
+    if (df_fichier.iloc[page][index])[6] != None:
+        intitule_du_compte = (df_fichier.iloc[page][index])[6]
+    if (df_fichier.iloc[page][index])[7] != None:
+        intitule_du_compte = intitule_du_compte + (df_fichier.iloc[page][index])[7]
+    if (df_fichier.iloc[page][index])[8] != None:
+        intitule_du_compte = intitule_du_compte + (df_fichier.iloc[page][index])[8]
+    return intitule_du_compte
+
+
+def extract_credit(df_fichier, index, page):
+    credit = ((df_fichier.iloc[page][index])[len(df_fichier.iloc[page][index]) - 2]).replace('€', '')
+    if credit != '':
+        credit = convert_montant(credit)
+    return credit
+
+
+def extract_debit(df_fichier, index, page):
+    debit = find_debit((df_fichier.iloc[page][index])[len(df_fichier.iloc[page][index]) - 4]).replace('€', '')
+    if debit != '':
+        debit = convert_montant(debit)
+    return debit
