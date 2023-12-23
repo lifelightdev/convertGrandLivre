@@ -1,100 +1,118 @@
 from datetime import datetime
-import pandas
-from constante import COLUMNS_NAME_COMPTE, DOSSIER_ETAPE, SEPARATEUR_CSV, ENCODING, DECIMAL
 
 
-def etape_4_extract_compte(df_entre):
+def etape_4_total(df_sortie):
     debut = datetime.today()
-    df = df_entre.loc[df_entre['Compte'].isin(['461900', '462900'])]
-    df = df[df['Libellé'].isin(['TOTAL DU COMPTE', 'Solde compte excédent', 'Solde compte insuffisance']) == False]
-    df = df.sort_values('Libellé')
-    df_sortie = pandas.DataFrame(columns=COLUMNS_NAME_COMPTE)
-    nb_ligne_sortie = 0
-    libelle = ''
-    index_debut = 0
-    total_solde = ''
-    for index in df.index:
-        if libelle == '':
-            libelle = nom_coproprietaire(df['Libellé'][index])
-            index_debut = nb_ligne_sortie + 2
-        if libelle == nom_coproprietaire(df['Libellé'][index]):
-            df_sortie.loc[nb_ligne_sortie] = [df["Compte"][index], df["Intitulé du compte"][index], df["Pièce"][index],
-                                              df["Date"][index], df["Journal"][index], df["Libellé"][index],
-                                              df["N° facture"][index], df["Débit"][index], df["Crédit"][index], ""]
-        else:
-            df_sortie.loc[nb_ligne_sortie] = [df['Compte'][index], f"{libelle}", "", "", "", "Total du copropriétaire",
-                                              "", f"=SUM(H{index_debut}:H{nb_ligne_sortie + 1})",
-                                              f"=SUM(I{index_debut}:I{nb_ligne_sortie + 1})",
-                                              f"=I{(nb_ligne_sortie + 2)}-H{(nb_ligne_sortie + 2)}"]
-            total_solde = f"{total_solde}+J{(nb_ligne_sortie + 2)}"
-            nb_ligne_sortie = nb_ligne_sortie + 1
-            df_sortie.loc[nb_ligne_sortie] = [df["Compte"][index], df["Intitulé du compte"][index], df["Pièce"][index],
-                                              df["Date"][index], df["Journal"][index], df["Libellé"][index],
-                                              df["N° facture"][index], df["Débit"][index], df["Crédit"][index], ""]
-            libelle = nom_coproprietaire(df['Libellé'][index])
-            index_debut = nb_ligne_sortie + 2
-        nb_ligne_sortie = nb_ligne_sortie + 1
-    df_sortie.loc[nb_ligne_sortie] = [df_sortie['Compte'][nb_ligne_sortie - 1], libelle, "", "", "",
-                                      "Total du copropriétaire", "", f"=SUM(H{index_debut}:H{nb_ligne_sortie + 1})",
-                                      f"=SUM(I{index_debut}:I{nb_ligne_sortie + 1})",
-                                      f"=I{(nb_ligne_sortie + 2)}-H{(nb_ligne_sortie + 2)}"]
-    total_solde = f"{total_solde}+J{(nb_ligne_sortie + 2)}"
-    nb_ligne_sortie = nb_ligne_sortie + 1
-    df_sortie.loc[nb_ligne_sortie] = ["", "", "", "", "", "Total des comptes 461900 et 462900", "",
-                                      df['Débit'].sum(), df['Crédit'].sum(),
-                                      f"=I{(nb_ligne_sortie + 2)}-H{(nb_ligne_sortie + 2)}"]
-    nb_ligne_sortie = nb_ligne_sortie + 1
-    df_sortie.loc[nb_ligne_sortie] = ["", "", "", "", "", "Cumule des soldes par copropriétaire", "", "", "",
-                                      f"={total_solde[1:]}"]
-
-    df_sortie.to_csv(f"{DOSSIER_ETAPE}/Etape_4_compte_461900df_461900_462900.csv", sep=SEPARATEUR_CSV,
-                            encoding=ENCODING, decimal=DECIMAL, index=False)
-    max_size_libelle = max(df_sortie['Libellé'].str.len())
-    max_size_compte = max(df_sortie['Intitulé du compte'].str.len())
-
-    writer = pandas.ExcelWriter(f"Sortie/compte_461900_462900.xlsx")
-    df_sortie.to_excel(writer, 'Feuille1', encoding=ENCODING, header=True, index=False, index_label=None,
-                       freeze_panes=(1, 1))
-    workbook = writer.book
-    worksheet = writer.sheets['Feuille1']
-
-    number_format = workbook.add_format({'num_format': '#,##0.00;[RED]-#,##0.00'})
-    cell_format = workbook.add_format({'bold': True, 'num_format': '#,##0.00;[RED]-#,##0.00'})
-    text_format = workbook.add_format({'num_format': '@'})
-    worksheet.set_column('A:A', 10, text_format)  # Compte
-    worksheet.set_column('B:B', max_size_compte)  # Intituleé du compte
-    worksheet.set_column('C:C', 13)  # Piéce
-    worksheet.set_column('D:D', 13)  # Date
-    worksheet.set_column('E:E', 6)  # Journal
-    worksheet.set_column('F:F', max_size_libelle)  # Libellé
-    worksheet.set_column('G:G', 13)  # Facture
-    worksheet.set_column('H:I', 13, number_format)
-
-    # Specify the result for a single cell range.
-    for index in df_sortie.index:
-        if (df_sortie["Libellé"][index] == "Total du copropriétaire") \
-                or (df_sortie["Libellé"][index] == "Total des comptes 461900 et 462900"):
-            worksheet.write_array_formula(f'H{index + 2}', f'{df_sortie["Débit"][index]}', cell_format, 2005)
-            worksheet.write_array_formula(f'I{index + 2}', f'{df_sortie["Crédit"][index]}', cell_format, 2005)
-            worksheet.write_array_formula(f'J{index + 2}', f'{df_sortie["Solde"][index]}', cell_format, 2005)
-            worksheet.set_row(index + 1, cell_format=cell_format)
-        if (df_sortie["Libellé"][index] == "Cumule des soldes par copropriétaire"):
-            worksheet.write_array_formula(f'J{index + 2}', f'{df_sortie["Solde"][index]}', cell_format, 2005)
-            worksheet.set_row(index + 1, cell_format=cell_format)
-    writer.save()
+    df_sortie = verif_total(df_sortie)
     fin = datetime.today()
-    print(f"Fin de l'étape 4 (Création du fichier des comptes 461900 et 462900 ) en {fin - debut}")
+    print(f"Fin de l'étape 4 (vérification des totaux) en {fin - debut}")
+    return df_sortie
 
 
-def nom_coproprietaire(libelle):
-    nom = ''
-    for index in libelle.split():
-        if index == "Excédent":
-            return nom
-        elif index == "Insuffisance":
-            return nom
-        elif index == "au":
-            return nom
-        else:
-            nom = f"{nom} {index}"
-    return nom
+def verif_total(df_sortie):
+    total_debit = 0
+    total_credit = 0
+    total_complet_debit = 0
+    total_complet_credit = 0
+    for index in df_sortie.index:
+        if df_sortie["Libellé"][index] is not None:
+            if (df_sortie["Libellé"][index].startswith('Total compte')
+                    or df_sortie["Libellé"][index].startswith('TOTAL DU COMPTE')):
+                compte, total_complet_credit, total_complet_debit, total_credit, total_debit = verif_totaux_compte(
+                    df_sortie, index, total_complet_credit, total_complet_debit, total_credit, total_debit)
+                if total_debit > total_credit:
+                    if df_sortie["Solde Débit"][index] == float(total_credit - total_debit):
+                        message = "OK"
+                    else:
+                        message = (f"(total_debit = {round(total_debit, 2)} "
+                                   f"total_credit = {round(total_credit, 2)}) "
+                                   f"Solde des débits ({round(total_debit, 2) - round(total_credit, 2)}) "
+                                   f"n'est pas égale au solde du grand livre = ({df_sortie['Solde Débit'][index]})")
+                else:
+                    if df_sortie["Solde Crédit"][index] != float(total_credit - total_debit):
+                        message = (f"(le total du débit = {round(total_debit, 2)} "
+                                   f"et le total du crédit = {round(total_credit, 2)}) "
+                                   f"Solde des crédits {round(total_credit, 2) - round(total_debit, 2)}) "
+                                   f"n'est pas égale au solde du grand livre = ({df_sortie['Solde Crédit'][index]})")
+                    else:
+                        message = "OK"
+                if len(message) > 0:
+                    df_sortie['Vérification Solde'][index] = message
+                else:
+                    df_sortie['Vérification Solde'][
+                        index] = "OK"
+                total_debit = 0
+                total_credit = 0
+            elif (df_sortie["Libellé"][index] == 'Total Général du Grand-Livre'
+                  or df_sortie["Libellé"][index] == 'Total immeuble'):
+                message = ''
+                total_complet_credit, total_complet_debit = verif_totaux_grand_livre(df_sortie, index,
+                                                                                     total_complet_credit,
+                                                                                     total_complet_debit)
+                if total_complet_debit > total_complet_credit:
+                    if df_sortie["Solde Débit"][index] == (total_complet_debit - total_complet_credit):
+                        message = (f"OK le total des débits = {total_complet_debit} "
+                                   f"le total des crédits = {total_complet_credit}")
+                    else:
+                        message = f"Solde général des débits ({float(total_complet_debit - total_complet_credit)}) " \
+                                  f"n'est pas égale au solde du grand livre = ({df_sortie['Solde Débit'][index]})"
+                if total_complet_credit > total_complet_debit:
+                    if df_sortie["Solde Crédit"][index] != (total_complet_credit - total_complet_debit):
+                        message = f"Solde général des crédits ({float(total_complet_credit - total_complet_debit)}) " \
+                                  f"n'est pas égale au solde du grand livre = ({df_sortie['Solde Crédit'][index]})"
+                if len(message) > 0:
+                    df_sortie['Vérification Solde'][index] = message
+                else:
+                    df_sortie['Vérification Solde'][
+                        index] = (f"OK le total des débits = {total_complet_debit} "
+                                  f"le total des crédits = {total_complet_credit}")
+            else:
+                total_debit = total_debit + df_sortie['Débit'][index]
+                total_credit = total_credit + df_sortie['Crédit'][index]
+    return df_sortie
+
+
+def remove_compte_in_total(df_sortie, ids_ligne_totaux):
+    for index in ids_ligne_totaux:
+        df_sortie["Compte"][index] = ""
+    return df_sortie
+
+
+def verif_totaux_grand_livre(df_sortie, index, total_complet_credit, total_complet_debit):
+    message = ''
+    total_complet_debit = round(total_complet_debit, 2)
+    total_complet_credit = round(total_complet_credit, 2)
+    if float(total_complet_debit) != df_sortie["Débit"][index]:
+        message = f"Le total des débits ({float(total_complet_debit)}) n'est pas égale au total du grand livre" \
+                  f" ({df_sortie['Débit'][index]}) \n"
+    if float(total_complet_credit) != df_sortie["Crédit"][index]:
+        message = f"Le total des crédits ({total_complet_credit}) n'est pas égale au total du grand livre " \
+                  f"({df_sortie['Crédit'][index]}) \n"
+    if len(message) > 0:
+        df_sortie['Vérification Débit/Crédit'][index] = message
+    else:
+        df_sortie['Vérification Débit/Crédit'][index] = 'OK'
+    return total_complet_credit, total_complet_debit
+
+
+def verif_totaux_compte(df_sortie, index, total_complet_credit, total_complet_debit, total_credit, total_debit):
+    message = ''
+    total_debit = round(float(total_debit), 2)
+    total_credit = round(float(total_credit), 2)
+    if float(total_debit) != df_sortie["Débit"][index]:
+        message = f"Le total des débits ({float(total_debit)}) n'est pas égale au total du grand livre = " \
+                  f"({df_sortie['Débit'][index]}) \n"
+    if float(total_credit) != df_sortie["Crédit"][index]:
+        message = f"Le total des crédits ({total_credit}) n'est pas égale au total du grand livre " \
+                  f"({df_sortie['Crédit'][index]}) \n"
+    if len(message) > 0:
+        df_sortie['Vérification Débit/Crédit'][index] = message
+    else:
+        df_sortie['Vérification Débit/Crédit'][index] = "OK"
+    total_complet_debit = total_complet_debit + total_debit
+    total_complet_credit = total_complet_credit + total_credit
+    if index < (len(df_sortie['Compte']) - 1):
+        compte = df_sortie["Compte"][index + 1]
+    else:
+        compte = ''
+    return compte, total_complet_credit, total_complet_debit, total_credit, total_debit

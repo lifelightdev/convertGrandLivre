@@ -4,20 +4,21 @@ def extract_entete(table, ligne):
 def extract_total(ligne):
     if ligne[0].startswith('TOTAL DU COMPTE : ', 0, 18):
         return ligne[0]
+    if ligne[0].startswith('Total compte ', 0, 18):
+        return ligne[0]
     return None
 
 def extact_total_montant(ligne):
-    compte = ligne[18:].split()[0]
-    montants = ligne[18:].split()
-    montants.remove(compte)
-    retour = [compte]
+    retour = []
     montant = ''
-    for nombre in range(0, len(montants)):
-        if montants[nombre].find(',') > 0:
-            retour.append(f"{montant}{montants[nombre]}")
-            montant = ''
-        else:
-            montant = f"{montant}{montants[nombre]}"
+    for nombre in range(0, len(ligne)):
+        if (ligne[nombre] != None):
+            if ligne[nombre].find(',') > 0:
+                retour.append(f"{montant}{ligne[nombre]}")
+                montant = ''
+            else:
+                if ligne[nombre].isnumeric():
+                    montant = f"{montant}{ligne[nombre]}"
     return retour
 
 def extact_total_grand_livre(ligne):
@@ -29,5 +30,6 @@ def extact_total_grand_livre(ligne):
             retour.append(montant + montants[nombre])
             montant = ''
         else:
-            montant = montant + montants[nombre]
+            if montants[nombre].isnumeric():
+                montant = montant + montants[nombre]
     return retour

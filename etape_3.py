@@ -1,25 +1,101 @@
 from datetime import datetime
-from constante import DOSSIER_ETAPE, SEPARATEUR_CSV, ENCODING, DECIMAL
+import pandas
+from constante import COLUMNS_NAME_COMPTE_S, DOSSIER_SORTIE
 
 
-def etape_3_add_count(df_sortie):
+def etape_3_file_compte_s(df_entre, nom_syndic, date_impression):
     debut = datetime.today()
-    compte = ''
+    # df = df_entre.loc[df_entre['Compte'].isin(['461900', '462900'])]
+    # df = df[df['Libellé'].isin(['TOTAL DU COMPTE', 'Solde compte excédent', 'Solde compte insuffisance']) == False]
+    df = df_entre
+    df = df.sort_values('Libellé')
+    df_sortie = pandas.DataFrame(columns=COLUMNS_NAME_COMPTE_S)
+    nb_ligne_sortie = 0
     libelle = ''
-    nombre_de_ligne_sortie = len(df_sortie) - 1
-    while nombre_de_ligne_sortie > 0:
-        if df_sortie["Libellé"][nombre_de_ligne_sortie] == "TOTAL DU COMPTE":
-            compte = df_sortie["Compte"][nombre_de_ligne_sortie]
-            libelle = df_sortie["Intitulé du compte"][nombre_de_ligne_sortie]
+    index_debut = 0
+    total_solde = ''
+    for index in df.index:
+        if libelle == '':
+            libelle = nom_coproprietaire(df['Libellé'][index])
+            index_debut = nb_ligne_sortie + 2
+        if libelle == nom_coproprietaire(df['Libellé'][index]):
+            df_sortie.loc[nb_ligne_sortie] = [df["Compte"][index], df["Intitulé du compte"][index], df["Pièce"][index],
+                                              df["Date"][index], df["Journal"][index], df["Libellé"][index],
+                                              df["N° facture"][index], df["Débit"][index], df["Crédit"][index], ""]
         else:
-            df_sortie["Compte"][nombre_de_ligne_sortie] = compte
-            df_sortie["Intitulé du compte"][nombre_de_ligne_sortie] = libelle
-        nombre_de_ligne_sortie = nombre_de_ligne_sortie - 1
-    # Ecriture du dataframe de sortie
-    df_sortie.to_csv(f"{DOSSIER_ETAPE}/Etape_3_Grand_livre_avec_compte.csv", sep=SEPARATEUR_CSV, encoding=ENCODING,
-                     decimal=DECIMAL, index=False)
+            df_sortie.loc[nb_ligne_sortie] = [df['Compte'][index], f"{libelle}", "", "", "", "Total du copropriétaire",
+                                              "", f"=SUM(H{index_debut}:H{nb_ligne_sortie + 1})",
+                                              f"=SUM(I{index_debut}:I{nb_ligne_sortie + 1})",
+                                              f"=I{(nb_ligne_sortie + 2)}-H{(nb_ligne_sortie + 2)}"]
+            total_solde = f"{total_solde}+J{(nb_ligne_sortie + 2)}"
+            nb_ligne_sortie = nb_ligne_sortie + 1
+            df_sortie.loc[nb_ligne_sortie] = [df["Compte"][index], df["Intitulé du compte"][index], df["Pièce"][index],
+                                              df["Date"][index], df["Journal"][index], df["Libellé"][index],
+                                              df["N° facture"][index], df["Débit"][index], df["Crédit"][index], ""]
+            libelle = nom_coproprietaire(df['Libellé'][index])
+            index_debut = nb_ligne_sortie + 2
+        nb_ligne_sortie = nb_ligne_sortie + 1
 
+    df_sortie.loc[nb_ligne_sortie] = [df_sortie['Compte'][nb_ligne_sortie - 1], libelle, "", "", "",
+                                      "Total du copropriétaire", "", f"=SUM(H{index_debut}:H{nb_ligne_sortie + 1})",
+                                      f"=SUM(I{index_debut}:I{nb_ligne_sortie + 1})",
+                                      f"=I{(nb_ligne_sortie + 2)}-H{(nb_ligne_sortie + 2)}"]
+    total_solde = f"{total_solde}+J{(nb_ligne_sortie + 2)}"
+    nb_ligne_sortie = nb_ligne_sortie + 1
+    df_sortie.loc[nb_ligne_sortie] = ["", "", "", "", "", "Total des comptes 461900 et 462900", "",
+                                      df['Débit'].sum(), df['Crédit'].sum(),
+                                      f"=I{(nb_ligne_sortie + 2)}-H{(nb_ligne_sortie + 2)}"]
+    nb_ligne_sortie = nb_ligne_sortie + 1
+    df_sortie.loc[nb_ligne_sortie] = ["", "", "", "", "", "Cumule des soldes par copropriétaire", "", "", "",
+                                      f"={total_solde[1:]}"]
+
+    max_size_libelle = max(df_sortie['Libellé'].str.len())
+    max_size_compte = max(df_sortie['Intitulé du compte'].str.len())
+
+    writer = pandas.ExcelWriter(
+        f"{DOSSIER_SORTIE}/{nom_syndic}/compte_461900_462900 de {nom_syndic} du {date_impression}.xlsx")
+    df_sortie.to_excel(writer, 'Feuille1', header=True, index=False, index_label=None, freeze_panes=(1, 1))
+    workbook = writer.book
+    worksheet = writer.sheets['Feuille1']
+
+    number_format = workbook.add_format({'num_format': '#,##0.00;[RED]-#,##0.00'})
+    cell_format = workbook.add_format({'bold': True, 'num_format': '#,##0.00;[RED]-#,##0.00'})
+    text_format = workbook.add_format({'num_format': '@'})
+    worksheet.set_column('A:A', 10, text_format)  # Compte
+    worksheet.set_column('B:B', max_size_compte)  # Intituleé du compte
+    worksheet.set_column('C:C', 13)  # Piéce
+    worksheet.set_column('D:D', 13)  # Date
+    worksheet.set_column('E:E', 6)  # Journal
+    worksheet.set_column('F:F', max_size_libelle)  # Libellé
+    worksheet.set_column('G:G', 13)  # Facture
+    worksheet.set_column('H:I', 13, number_format)
+
+    for index in df_sortie.index:
+        if (df_sortie["Libellé"][index] == "Total du copropriétaire") \
+                or (df_sortie["Libellé"][index] == "Total des comptes 461900 et 462900"):
+            worksheet.write_array_formula(f'H{index + 2}', f'{df_sortie["Débit"][index]}', cell_format, 2005)
+            worksheet.write_array_formula(f'I{index + 2}', f'{df_sortie["Crédit"][index]}', cell_format, 2005)
+            worksheet.write_array_formula(f'J{index + 2}', f'{df_sortie["Solde"][index]}', cell_format, 2005)
+            worksheet.set_row(index + 1, cell_format=cell_format)
+        if (df_sortie["Libellé"][index] == "Cumule des soldes par copropriétaire"):
+            worksheet.write_array_formula(f'J{index + 2}', f'{df_sortie["Solde"][index]}', cell_format, 2005)
+            worksheet.set_row(index + 1, cell_format=cell_format)
+    writer.close()
     fin = datetime.today()
-    print(f"Fin de l'étape 3 (écriture des comptes) en {fin - debut}")
+    print(f"Fin de l'étape 4 (Création du fichier des comptes 461900 et 462900 ) en {fin - debut}")
 
-    return df_sortie
+
+def nom_coproprietaire(libelle):
+    if libelle != None:
+        nom = ''
+        for index in libelle.split():
+            if index == "Excédent":
+                return nom
+            elif index == "Insuffisance":
+                return nom
+            elif index == "au":
+                return nom
+            else:
+                nom = f"{nom} {index}"
+        return nom
+    return ""
