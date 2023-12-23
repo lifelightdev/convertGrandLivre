@@ -18,21 +18,21 @@ def verif_total(df_sortie):
         if df_sortie["Libellé"][index] is not None:
             if (df_sortie["Libellé"][index].startswith('Total compte')
                     or df_sortie["Libellé"][index].startswith('TOTAL DU COMPTE')):
-                compte, total_complet_credit, total_complet_debit, total_credit, total_debit = verif_totaux_compte(
+                total_complet_credit, total_complet_debit, total_credit, total_debit = verif_totaux_compte(
                     df_sortie, index, total_complet_credit, total_complet_debit, total_credit, total_debit)
                 if total_debit > total_credit:
-                    if df_sortie["Solde Débit"][index] == float(total_credit - total_debit):
+                    if df_sortie["Solde Débit"][index] == float(round(round(total_debit, 2) - round(total_credit, 2), 2)):
                         message = "OK"
                     else:
-                        message = (f"(total_debit = {round(total_debit, 2)} "
-                                   f"total_credit = {round(total_credit, 2)}) "
+                        message = (f"(Le total débit = {round(total_debit, 2)} "
+                                   f"et le total crédit = {round(total_credit, 2)}) "
                                    f"Solde des débits ({round(total_debit, 2) - round(total_credit, 2)}) "
                                    f"n'est pas égale au solde du grand livre = ({df_sortie['Solde Débit'][index]})")
                 else:
-                    if df_sortie["Solde Crédit"][index] != float(total_credit - total_debit):
+                    if df_sortie["Solde Crédit"][index] != float(round(total_credit - total_debit, 2)):
                         message = (f"(le total du débit = {round(total_debit, 2)} "
                                    f"et le total du crédit = {round(total_credit, 2)}) "
-                                   f"Solde des crédits {round(total_credit, 2) - round(total_debit, 2)}) "
+                                   f"Solde des crédits {round(round(total_credit, 2) - round(total_debit, 2), 2)}) "
                                    f"n'est pas égale au solde du grand livre = ({df_sortie['Solde Crédit'][index]})")
                     else:
                         message = "OK"
@@ -111,8 +111,4 @@ def verif_totaux_compte(df_sortie, index, total_complet_credit, total_complet_de
         df_sortie['Vérification Débit/Crédit'][index] = "OK"
     total_complet_debit = total_complet_debit + total_debit
     total_complet_credit = total_complet_credit + total_credit
-    if index < (len(df_sortie['Compte']) - 1):
-        compte = df_sortie["Compte"][index + 1]
-    else:
-        compte = ''
-    return compte, total_complet_credit, total_complet_debit, total_credit, total_debit
+    return total_complet_credit, total_complet_debit, total_credit, total_debit

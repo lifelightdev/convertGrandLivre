@@ -28,7 +28,7 @@ def main():
     df_sortie = etape_2_create_df(pages, liste_cpt, args.copro)
     if args.copro == COPRO_S:
         etape_3_file_compte_s(df_sortie, nom_syndic, date_impression)
-    df_sortie = etape_4_total(df_sortie, date_impression, nom_syndic, arrete_au)
+    df_sortie = etape_4_total(df_sortie)
     etape_5_write_file_grand_livre(df_sortie, date_impression, nom_syndic, arrete_au, args.copro)
     etape_6_journaux(df_sortie, nom_syndic, date_impression, arrete_au, args.copro)
     if args.copro == COPRO_N:

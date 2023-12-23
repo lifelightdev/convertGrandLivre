@@ -346,39 +346,22 @@ def copro_s(file, liste_compte):
                     if not ligne_null(file[page][ligne]):
                         if len(file[page][ligne]) == 10:
                             if extract_total(file[page][ligne]):
-                                ajout_ligne_total(df_sortie, file[page][ligne], liste_compte, nb_ligne_sortie)
+                                nb_ligne_sortie = ajout_ligne_total(df_sortie, file[page][ligne], liste_compte,
+                                                                    nb_ligne_sortie)
                             else:
-                                df_sortie.loc[nb_ligne_sortie] = [compte, libelle_du_compte, file[page][ligne][0],
-                                                                  file[page][ligne][1], file[page][ligne][2],
-                                                                  file[page][ligne][4], file[page][ligne][5],
-                                                                  zero_if_empty(file[page][ligne][6]),
-                                                                  zero_if_empty(file[page][ligne][7]),
-                                                                  zero_if_empty(file[page][ligne][8]),
-                                                                  zero_if_empty(file[page][ligne][9]), "", ""]
-                            nb_ligne_sortie = nb_ligne_sortie + 1
+                                nb_ligne_sortie = add_line(compte, df_sortie, libelle_du_compte,
+                                                           file[page][ligne], nb_ligne_sortie)
                         elif len(file[page][ligne]) == 11:
                             if PATTERN_PIECE.match(file[page][ligne][0]) is None:
-                                df_sortie.loc[nb_ligne_sortie] = [compte, libelle_du_compte, file[page][ligne][0],
-                                                                  file[page][ligne][1], file[page][ligne][2],
-                                                                  file[page][ligne][4], file[page][ligne][5],
-                                                                  zero_if_empty(file[page][ligne][7]),
-                                                                  zero_if_empty(file[page][ligne][8]),
-                                                                  zero_if_empty(file[page][ligne][9]),
-                                                                  zero_if_empty(file[page][ligne][10]), "", ""]
-                                nb_ligne_sortie = nb_ligne_sortie + 1
+                                nb_ligne_sortie = add_line(compte, df_sortie, libelle_du_compte,
+                                                           file[page][ligne], nb_ligne_sortie)
                         elif len(file[page][ligne]) == 12:
                             if PATTERN_PIECE.match(file[page][ligne][0]) is not None:
-                                df_sortie.loc[nb_ligne_sortie] = [compte, libelle_du_compte, file[page][ligne][0],
-                                                                  file[page][ligne][1],
-                                                                  file[page][ligne][2], file[page][ligne][4],
-                                                                  file[page][ligne][5],
-                                                                  zero_if_empty(file[page][ligne][-4]),
-                                                                  zero_if_empty(file[page][ligne][-3]),
-                                                                  zero_if_empty(file[page][ligne][-2]),
-                                                                  zero_if_empty(file[page][ligne][-1]), "", ""]
-                                nb_ligne_sortie = nb_ligne_sortie + 1
+                                nb_ligne_sortie = add_line(compte, df_sortie, libelle_du_compte,
+                                                           file[page][ligne], nb_ligne_sortie)
                             elif extract_total(file[page][ligne]):
-                                ajout_ligne_total(df_sortie, file[page][ligne], liste_compte, nb_ligne_sortie)
+                                nb_ligne_sortie = ajout_ligne_total(df_sortie, file[page][ligne], liste_compte,
+                                                                    nb_ligne_sortie)
                         elif (len(file[page][ligne]) == 13) and (file[page][ligne][0] != 'Pièce/F/L'):
                             if (file[page][ligne][4] is not None
                                     and file[page][ligne][4].startswith('Total Général du Grand-Livre', 0, 28)):
@@ -389,7 +372,8 @@ def copro_s(file, liste_compte):
                                                                   zero_if_empty(file[page][ligne][-1]), "", ""]
                                 nb_ligne_sortie = nb_ligne_sortie + 1
                             elif extract_total(file[page][ligne]):
-                                ajout_ligne_total(df_sortie, file[page][ligne], liste_compte, nb_ligne_sortie)
+                                nb_ligne_sortie = ajout_ligne_total(df_sortie, file[page][ligne], liste_compte,
+                                                                    nb_ligne_sortie)
                             else:
                                 df_sortie.loc[nb_ligne_sortie] = [compte, libelle_du_compte, file[page][ligne][0],
                                                                   file[page][ligne][1], file[page][ligne][2],
@@ -400,6 +384,13 @@ def copro_s(file, liste_compte):
                                                                   zero_if_empty(file[page][ligne][-1]), "", ""]
                             nb_ligne_sortie = nb_ligne_sortie + 1
     return df_sortie
+
+
+def add_line(compte, df_sortie, libelle_du_compte, ligne, nb_ligne_sortie):
+    df_sortie.loc[nb_ligne_sortie] = [compte, libelle_du_compte, ligne[0], ligne[1], ligne[2], ligne[4], ligne[5],
+                                      zero_if_empty(ligne[-4]), zero_if_empty(ligne[-3]), zero_if_empty(ligne[-2]),
+                                      zero_if_empty(ligne[-1]), "", ""]
+    return nb_ligne_sortie + 1
 
 
 def est_ligne_libelle_compte(file, ligne, page):
@@ -459,3 +450,5 @@ def ajout_ligne_total(df_sortie, ligne, liste_compte, nombre_de_ligne_sortie):
     df_sortie.loc[nombre_de_ligne_sortie] = [compte, libelle_compte, "", "", "", "TOTAL DU COMPTE", "",
                                              zero_if_empty(ligne[-4]), zero_if_empty(ligne[-3]),
                                              zero_if_empty(ligne[-2]), zero_if_empty(ligne[-1]), "", ""]
+    nombre_de_ligne_sortie = nombre_de_ligne_sortie + 1
+    return nombre_de_ligne_sortie

@@ -30,6 +30,9 @@ def extract_file(my_file: str, copro: str):
 
 
 def extract_donnees(copro, page):
+    arrete_au = ''
+    date_impression = ''
+    nom_syndic = ''
     if copro == COPRO_N:
         nom_syndic = f"{page[0]} {page[1]} {page[2]}"
         date_impression = page[3]
@@ -40,7 +43,7 @@ def extract_donnees(copro, page):
     if copro == COPRO_S:
         nom_syndic = page[0]
         date_impression = page[len(page) - 6]
-        arrete_au = page[17]
+        arrete_au = page[19]
     arrete_au = arrete_au.replace('/', '-')
     date_impression = date_impression.replace('/', ' ')
     date_impression = date_impression.split()

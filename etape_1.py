@@ -39,38 +39,38 @@ def compte_n(df_liste_compte, nombre_de_compte, text):
             df_liste_compte.loc[nombre_de_compte] = [compte, libelle]
             nombre_de_compte = nombre_de_compte + 1
     if len(text) == 9:
-        if text[0] == '' and text[1] == None \
+        if text[0] == '' and text[1] is None \
                 and not not text[2] and text[3] == '' \
-                and not not text[4] and text[5] == None \
-                and text[6] == "" and text[7] == None \
-                and text[8] == None:
+                and not not text[4] and text[5] is None \
+                and text[6] == "" and text[7] is None \
+                and text[8] is None:
             compte = text[2]
             libelle = text[4]
             df_liste_compte.loc[nombre_de_compte] = [compte, libelle]
             nombre_de_compte = nombre_de_compte + 1
     if len(text) == 22:
         compte = text[4]
-        if not (text[8] == None):
-            if not (text[7] == None):
+        if not (text[8] is None):
+            if not (text[7] is None):
                 libelle = text[7]
             libelle = libelle + text[8]
-        if (not compte == None) and (not libelle == None) and (not libelle == ''):
+        if (compte is not None) and (libelle is not None) and (not libelle == ''):
             df_liste_compte.loc[nombre_de_compte] = [compte, libelle]
             nombre_de_compte = nombre_de_compte + 1
     if len(text) == 20 or len(text) == 21:
         compte = text[4]
-        if not (text[7] == None):
-            if not (text[5] == None):
+        if text[7] is not None:
+            if text[5] is not None:
                 libelle = text[5]
-            if not (text[6] == None):
+            if text[6] is not None:
                 libelle = libelle + text[6]
             libelle = libelle + text[7]
         else:
-            if not (text[5] == None):
+            if text[5] is not None:
                 libelle = text[5]
-            if not (text[8] == None):
+            if text[8] is not None:
                 libelle = libelle + text[8]
-        if (not compte == None) and (not libelle == None) and (not libelle == ''):
+        if (compte is not None) and (libelle is not None) and (not libelle == ''):
             df_liste_compte.loc[nombre_de_compte] = [compte, libelle]
             nombre_de_compte = nombre_de_compte + 1
     return nombre_de_compte, df_liste_compte
@@ -78,7 +78,7 @@ def compte_n(df_liste_compte, nombre_de_compte, text):
 
 def compte_s(df_liste_compte, ligne):
     for colonne in ligne:
-        if not colonne == None:
+        if colonne is not None:
             if colonne.startswith('Compte : '):
                 colonne = colonne.replace('Compte : ', '')
                 if colonne.startswith('450 Copropriétaire : '):
