@@ -1,3 +1,7 @@
+#########
+# Création du dataframe du grand livre
+#########
+
 import logging
 from datetime import datetime
 import pandas

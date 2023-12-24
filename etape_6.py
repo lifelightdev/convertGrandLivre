@@ -1,3 +1,7 @@
+#########
+# Création et écriture des fichiers de journaux
+#########
+
 from datetime import datetime
 import pandas
 from constante import DOSSIER_SORTIE, COPRO_N

@@ -1,3 +1,7 @@
+#########
+# Extraction de la liste des comptes
+#########
+
 from datetime import datetime
 import pandas
 from constante import COLUMNS_NAME_LIST_COMPTE, COPRO_S, COPRO_N

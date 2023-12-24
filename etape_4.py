@@ -1,3 +1,7 @@
+#########
+# Vérification des totaux du grand livre
+#########
+
 from datetime import datetime
 
 

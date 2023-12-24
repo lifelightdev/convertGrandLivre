@@ -1,3 +1,7 @@
+#########
+# Ecriture du fichier du grand livre
+#########
+
 from datetime import datetime
 import pandas
 from constante import DOSSIER_SORTIE, COPRO_S, COPRO_N
