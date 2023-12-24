@@ -1,3 +1,7 @@
+#########
+# Création du fichier des comptes '461900', '462900' trié par copropriétaire
+#########
+
 from datetime import datetime
 import pandas
 from constante import COLUMNS_NAME_COMPTE_S, DOSSIER_SORTIE
@@ -5,9 +9,8 @@ from constante import COLUMNS_NAME_COMPTE_S, DOSSIER_SORTIE
 
 def etape_3_file_compte_s(df_entre, nom_syndic, date_impression):
     debut = datetime.today()
-    # df = df_entre.loc[df_entre['Compte'].isin(['461900', '462900'])]
-    # df = df[df['Libellé'].isin(['TOTAL DU COMPTE', 'Solde compte excédent', 'Solde compte insuffisance']) == False]
-    df = df_entre
+    df = df_entre.loc[df_entre['Compte'].isin(['461900', '462900'])]
+    df = df[df['Libellé'].isin(['TOTAL DU COMPTE', 'Solde compte excédent', 'Solde compte insuffisance']) == False]
     df = df.sort_values('Libellé')
     df_sortie = pandas.DataFrame(columns=COLUMNS_NAME_COMPTE_S)
     nb_ligne_sortie = 0
