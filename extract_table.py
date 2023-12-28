@@ -1,8 +1,11 @@
+from constante import TOTAL_COMPTE_S
+
+
 def extract_entete(table, ligne):
     return table[ligne]
 
 def extract_total(ligne):
-    if ligne[0].startswith('TOTAL DU COMPTE : ', 0, 18):
+    if ligne[0].startswith(TOTAL_COMPTE_S, 0, 18):
         return ligne[0]
     if ligne[0].startswith('Total compte ', 0, 18):
         return ligne[0]

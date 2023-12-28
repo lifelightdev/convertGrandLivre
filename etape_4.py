@@ -4,6 +4,8 @@
 
 from datetime import datetime
 
+from constante import TOTAL_COMPTE_S
+
 
 def etape_4_total(df_sortie):
     debut = datetime.today()
@@ -21,7 +23,7 @@ def verif_total(df_sortie):
     for index in df_sortie.index:
         if df_sortie["Libellé"][index] is not None:
             if (df_sortie["Libellé"][index].startswith('Total compte')
-                    or df_sortie["Libellé"][index].startswith('TOTAL DU COMPTE')):
+                    or df_sortie["Libellé"][index].startswith(TOTAL_COMPTE_S)):
                 total_complet_credit, total_complet_debit, total_credit, total_debit = verif_totaux_compte(
                     df_sortie, index, total_complet_credit, total_complet_debit, total_credit, total_debit)
                 if total_debit > total_credit:

@@ -11,15 +11,18 @@ from outil import is_ligne_libelle_compte
 def etape_1_liste_compte(pages, copro):
     debut = datetime.today()
     liste_compte = {}
+    liste_compte_copro = []
     df_liste_compte = extract_liste_de_compte(pages, copro)
     nombre_de_ligne = len(df_liste_compte)
     index = 0
     while nombre_de_ligne > index:
         liste_compte[str(df_liste_compte.iloc[index, 0])] = df_liste_compte.iloc[index, 1]
+        if df_liste_compte.iloc[index]['Compte'].startswith('450'):
+            liste_compte_copro.append(df_liste_compte.iloc[index, 0])
         index = index + 1
     fin = datetime.today()
     print(f"Fin de l'étape 1 (recherche des comptes et leurs libellé) en {fin - debut}")
-    return liste_compte
+    return liste_compte, liste_compte_copro
 
 
 def extract_liste_de_compte(pages, copro: str):
@@ -87,7 +90,7 @@ def compte_s(df_liste_compte, ligne):
                 colonne = colonne.replace('Compte : ', '')
                 if colonne.startswith('450 Copropriétaire : '):
                     colonne = colonne.replace('450 Copropriétaire : ', '')
-                    compte = '450' + colonne.split()[0]
+                    compte = '450' + str(int(str(colonne.split()[0])))
                     libelle = colonne.replace(colonne.split()[0], '').lstrip()
                 else:
                     compte = colonne.split()[0]

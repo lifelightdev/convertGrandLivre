@@ -4,7 +4,7 @@
 
 from datetime import datetime
 import pandas
-from constante import DOSSIER_SORTIE, COPRO_S, COPRO_N
+from constante import DOSSIER_SORTIE, COPRO_S, COPRO_N, TOTAL_COMPTE_S
 from outil import find_ligne_total
 
 
@@ -12,9 +12,8 @@ def etape_5_write_file_grand_livre(df_sortie, date_impression, nom_syndic, arret
     debut = datetime.today()
     max_size_libelle = max(df_sortie['Libellé'].str.len())
     max_size_compte = max(df_sortie['Intitulé du compte'].str.len())
-    # Ecriture du dataframe de sortie
     if copro == COPRO_S:
-        ids_ligne_totaux = find_ligne_total(df_sortie, "TOTAL DU COMPTE")
+        ids_ligne_totaux = find_ligne_total(df_sortie, TOTAL_COMPTE_S, "Total Général du Grand-Livre")
     if copro == COPRO_N:
         ids_ligne_totaux = find_ligne_total(df_sortie, "Total compte ")
     writer = pandas.ExcelWriter(f"{DOSSIER_SORTIE}/{nom_syndic}/{date_impression} Grand livre - {nom_syndic} arrêté "

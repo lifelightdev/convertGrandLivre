@@ -21,6 +21,8 @@ COLUMNS_NAME_COMPTE_N = ["Compte", "Intitulé du compte", "Pièce", "Date", "Jou
 
 COLUMNS_NAME_LIST_COMPTE = ["Compte", "Intitulé"]
 
+TOTAL_COMPTE_S = "TOTAL DU COMPTE"
+
 COPRO_N = "N"
 COPRO_S = "S"
 

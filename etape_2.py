@@ -5,7 +5,7 @@
 import logging
 from datetime import datetime
 import pandas
-from constante import PATTERN_PIECE, COLUMNS_NAME_S, COPRO_S, COPRO_N, COLUMNS_NAME_N
+from constante import PATTERN_PIECE, COLUMNS_NAME_S, COPRO_S, COPRO_N, COLUMNS_NAME_N, TOTAL_COMPTE_S
 from extract_table import extract_total
 from outil import convert_montant, is_date, is_ligne_du_tableau, find_debit
 
@@ -366,7 +366,7 @@ def copro_s(file, liste_compte):
                             elif extract_total(file[page][ligne]):
                                 nb_ligne_sortie = ajout_ligne_total(df_sortie, file[page][ligne], liste_compte,
                                                                     nb_ligne_sortie)
-                        elif (len(file[page][ligne]) == 13) and (file[page][ligne][0] != 'Pièce/F/L'):
+                        elif (len(file[page][ligne]) == 13):
                             if (file[page][ligne][4] is not None
                                     and file[page][ligne][4].startswith('Total Général du Grand-Livre', 0, 28)):
                                 df_sortie.loc[nb_ligne_sortie] = ["", "", "", "", "", "Total Général du Grand-Livre",
@@ -374,7 +374,6 @@ def copro_s(file, liste_compte):
                                                                   zero_if_empty(file[page][ligne][-3]),
                                                                   zero_if_empty(file[page][ligne][-2]),
                                                                   zero_if_empty(file[page][ligne][-1]), "", ""]
-                                nb_ligne_sortie = nb_ligne_sortie + 1
                             elif extract_total(file[page][ligne]):
                                 nb_ligne_sortie = ajout_ligne_total(df_sortie, file[page][ligne], liste_compte,
                                                                     nb_ligne_sortie)
@@ -403,7 +402,9 @@ def est_ligne_libelle_compte(file, ligne, page):
 
 def est_entete_de_colonne(file, ligne, page):
     return (file[page][ligne] == ['Pièce/F/L', 'Date Cpt', 'Jal', 'L.', 'Libellé', 'N° Facture', 'Débit', 'Crédit',
-                                  'Solde Débit', 'Solde Crédit'])
+                                  'Solde Débit', 'Solde Crédit']
+            or file[page][ligne] == ['Pièce/F/L', 'Date Cpt', 'Jal', 'L.', None, 'Libellé', None, 'N° Facture', None,
+                                     'Débit', 'Crédit', 'Solde Débit', 'Solde Crédit'])
 
 
 def ligne_null(ligne):
@@ -447,11 +448,11 @@ def ajout_ligne_total(df_sortie, ligne, liste_compte, nombre_de_ligne_sortie):
     compte = ligne[0].split()[4]
     if compte not in liste_compte:
         if compte.isnumeric():
-            libelle_compte = liste_compte[f"450{compte}"]
+            libelle_compte = liste_compte[f"450{int(compte)}"]
             compte = f"450{int(compte)}"
     else:
         libelle_compte = liste_compte[compte]
-    df_sortie.loc[nombre_de_ligne_sortie] = [compte, libelle_compte, "", "", "", "TOTAL DU COMPTE", "",
+    df_sortie.loc[nombre_de_ligne_sortie] = [compte, libelle_compte, "", "", "", TOTAL_COMPTE_S, "",
                                              zero_if_empty(ligne[-4]), zero_if_empty(ligne[-3]),
                                              zero_if_empty(ligne[-2]), zero_if_empty(ligne[-1]), "", ""]
     nombre_de_ligne_sortie = nombre_de_ligne_sortie + 1

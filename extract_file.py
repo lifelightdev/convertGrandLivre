@@ -1,4 +1,5 @@
 import pdfplumber
+from datetime import datetime
 from constante import COPRO_N, COPRO_S
 
 table_settings_ligne = {"vertical_strategy": "lines",
@@ -16,6 +17,7 @@ table_settings_colonne = {"vertical_strategy": "lines",
 
 
 def extract_file(my_file: str, copro: str):
+    debut = datetime.today()
     les_pages = []
     with pdfplumber.open(my_file) as pdf:
         page = pdf.pages[0].extract_text().split()
@@ -26,6 +28,8 @@ def extract_file(my_file: str, copro: str):
         for index in range(0, len(pdf.pages)):
             page = pdf.pages[index].extract_tables(table_settings_ligne)
             les_pages = les_pages + page
+    fin = datetime.today()
+    print(f"Fin de l'extraction des données du fichier en {fin - debut}")
     return les_pages, nom_syndic, date_impression, arrete_au
 
 

@@ -24,10 +24,10 @@ def main():
     args = parser.parse_args()
     file_name = args.file
     pages, nom_syndic, date_impression, arrete_au = extract_file(file_name, args.copro)
-    liste_cpt = etape_1_liste_compte(pages, args.copro)
-    df_sortie = etape_2_create_df(pages, liste_cpt, args.copro)
+    liste_compte, liste_cpt_copro = etape_1_liste_compte(pages, args.copro)
+    df_sortie = etape_2_create_df(pages, liste_compte, args.copro)
     if args.copro == COPRO_S:
-        etape_3_file_compte_s(df_sortie, nom_syndic, date_impression)
+        etape_3_file_compte_s(df_sortie, nom_syndic, date_impression, liste_cpt_copro)
     df_sortie = etape_4_total(df_sortie)
     etape_5_write_file_grand_livre(df_sortie, date_impression, nom_syndic, arrete_au, args.copro)
     etape_6_journaux(df_sortie, nom_syndic, date_impression, arrete_au, args.copro)

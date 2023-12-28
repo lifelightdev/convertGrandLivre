@@ -1,12 +1,14 @@
 from datetime import datetime
 
 
-def find_ligne_total(df, column_name):
+def find_ligne_total(df, libelle_total_compte, libelle_total_grand_livre):
     ids_ligne_totaux = []
     for index in df.index:
-        if df["Libellé"][index] != None:
-            if df["Libellé"][index].startswith (column_name):
+        if df["Libellé"][index] is not None:
+            if df["Libellé"][index].startswith(libelle_total_compte):
                 ids_ligne_totaux.append(index + 1)
+            if df["Libellé"][index].startswith(libelle_total_grand_livre):
+                    ids_ligne_totaux.append(index + 1)
     return ids_ligne_totaux
 
 
