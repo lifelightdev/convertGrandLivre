@@ -4,7 +4,7 @@
 
 from datetime import datetime
 import pandas
-from constante import DOSSIER_SORTIE, COPRO_S, COPRO_N, TOTAL_COMPTE_S
+from constante import DOSSIER_SORTIE, COPRO_S, COPRO_N, TOTAL_COMPTE
 from outil import find_ligne_total
 
 
@@ -13,9 +13,9 @@ def etape_5_write_file_grand_livre(df_sortie, date_impression, nom_syndic, arret
     max_size_libelle = max(df_sortie['Libellé'].str.len())
     max_size_compte = max(df_sortie['Intitulé du compte'].str.len())
     if copro == COPRO_S:
-        ids_ligne_totaux = find_ligne_total(df_sortie, TOTAL_COMPTE_S, "Total Général du Grand-Livre")
+        ids_ligne_totaux = find_ligne_total(df_sortie, TOTAL_COMPTE, "Total Général du Grand-Livre")
     if copro == COPRO_N:
-        ids_ligne_totaux = find_ligne_total(df_sortie, "Total compte ")
+        ids_ligne_totaux = find_ligne_total(df_sortie, TOTAL_COMPTE, "Total immeuble")
     writer = pandas.ExcelWriter(f"{DOSSIER_SORTIE}/{nom_syndic}/{date_impression} Grand livre - {nom_syndic} arrêté "
                                 f"au {arrete_au}.xlsx")
     df_sortie.to_excel(writer, 'Feuille1', header=True, index=False, index_label=None, freeze_panes=(1, 1))
@@ -25,7 +25,7 @@ def etape_5_write_file_grand_livre(df_sortie, date_impression, nom_syndic, arret
     cell_format = workbook.add_format({'bold': True, 'num_format': '#,##0.00'})
     text_format = workbook.add_format({'num_format': '@'})
     for index in ids_ligne_totaux:
-        worksheet.set_row(index, None, cell_format)
+         worksheet.set_row(index, None, cell_format)
     worksheet.set_column('A:A', 15, text_format)  # Compte
     worksheet.set_column('B:B', max_size_compte)  # Intitulé du compte
     worksheet.set_column('C:C', 13)  # Piéce

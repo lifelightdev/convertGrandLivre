@@ -249,8 +249,9 @@ def is_ligne_du_tableau(ligne):
             if len(text) > 0:
                 if is_date(text[0]):
                     return True
-                if is_date(text[1]):
-                    return True
+                if len(text) > 1:
+                    if text[1] is not None and is_date(text[1]):
+                        return True
         # Ligne total
         if len(ligne) == 22:
             if (not ligne[10] == None) and (not ligne[10] == '') and ligne[10].startswith('Total compte '):
@@ -262,3 +263,73 @@ def is_ligne_libelle_compte(text):
     return text[0] == '' and text[1] == None and not not text[2] and (text[3] == None or text[3] == '') \
            and (text[4] == '' or text[4] == None) and not not text[5] and text[6] == None \
            and text[7] == '' and text[8] == None and text[9] == None
+
+
+def is_ligne_null(ligne):
+    if ['', '', '', None, '', '', ''] == ligne:
+        return True
+    if ['', '', '', '', '', '', '', '', '', ''] == ligne:
+        return True
+    if ['', '', '', '', '', None, '', None, '', '', '', ''] == ligne:
+        return True
+    if ['', '', '', '', None, '', None, '', None, '', '', '', ''] == ligne:
+        return True
+    if ['', None, None, None, None, None, '', '', '', ''] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, None, None, '', '', '', ''] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, None, None, ''] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, None, None, None] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, None, None, None, None, ''] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, None, None, None, None, None] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, None, None, None, None, None, None] == ligne:
+        return True
+    if ['', None, 'DEBITEUR', None, None, '0,00', None, '', None, None, None, None] == ligne:
+        return True
+    if ['', None, 'DEBITEUR', None, None, None, '0,00', None, '', None, None, None, None] == ligne:
+        return True
+    if ['', None, '', None, None, None, '', None, None, None, None, '', '', '', None, None, '', '', None, None, None, None, '', None, '', None, None, None, None] == ligne:
+        return True
+    if ['', None, '', None, None, None, '', None, None, None, None, '', '', '', None, None, '', '', None, None, None, None, '', None, '', None, None, None, None] == ligne:
+        return True
+    if ['', None, '', None, None, None, '', None, None, None, None, None, '', '', '', None, None, '', None, '', None, None, None, '', None, '', None, None, None, None] == ligne:
+        return True
+    if ['', None, '', None, None, None, '', None, None, None, None, None, '', '', '', None, None, '', '', '', None, '', None, '', None, '', None, None, None, None] == ligne:
+        return True
+    if ['', None, '', None, None, None, '', None, '', None, None, None, '', '', '', None, None, '', None, '', None, None, None, '', '', '', None, None, None, None] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, None, None, None, None, None, None, '', None, None, None, None, '', None, '', None, '', None, '', None, None, None, None] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, '', None, None, None, None, None, None, None, None, None, None, None, None, None, '', '', '', None, '', None, None, None] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, '', None, None, None, None, None, None, None, None, None, None, None, None, None, None, '', '', '', None, '', None, None, None] == ligne:
+        return True
+    if ['', None, '', None, None, '', None, None, None, None, None, None, None, None, None, None, '', None, None, None, None, None, None, None, None, None, None, None, None, ''] == ligne:
+        return True
+    if ['', None, None, None, '', None, None, None, None, None, None, None, None, None, None, None, '', None, None, None, None, None, None, None, None, None, None, None, None, ''] == ligne:
+        return True
+    if ['', None, None, None, '', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, '', None, '', None, None, None, None] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, '', None, '', None, None, None, None] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None] == ligne:
+        return True
+    if ['', None, None, None, '', None, None, None, None, None, None, None, None, None, None, '', None, None, None, None, None, None, None, None, None, None, None, None, None, ''] == ligne:
+        return True
+    if ['', None, '', None, None, '', None, None, None, None, None, None, None, None, None, '', None, None, None, None, None, None, None, None, None, None, None, None, None, ''] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None] == ligne:
+        return True
+    if ['', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, '', None, '', None, None, None, None] == ligne:
+        return True
+    if ['', None, None, None, '', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, '', None, '', None, None, None, None] == ligne:
+        return True
+    if ['', None, None, None, '', None, None, None, None, None, None, None, None, None, None, '', None, None, None, None, None, None, None, None, None, None, None, None, ''] == ligne:
+        return True
+    if ['', None, '', None, None, '', None, None, None, None, None, None, None, None, None, '', None, None, None, None, None, None, None, None, None, None, None, None, ''] == ligne:
+        return True
+    return False

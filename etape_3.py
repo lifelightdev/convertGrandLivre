@@ -4,7 +4,7 @@
 
 from datetime import datetime
 import pandas
-from constante import COLUMNS_NAME_COMPTE_S, DOSSIER_SORTIE, TOTAL_COMPTE_S
+from constante import COLUMNS_NAME_COMPTE_S, DOSSIER_SORTIE, TOTAL_COMPTE
 
 
 def etape_3_file_compte_s(df_entre, nom_syndic, date_impression, liste_cpt_copro):
@@ -12,7 +12,7 @@ def etape_3_file_compte_s(df_entre, nom_syndic, date_impression, liste_cpt_copro
     liste_compte_operation_courante = ('461900', '462900')
     df_operation_courante = df_entre.loc[df_entre['Compte'].isin(liste_compte_operation_courante)]
     df_operation_courante = df_operation_courante[df_operation_courante['Libellé'].isin(
-        [TOTAL_COMPTE_S, 'Solde compte excédent', 'Solde compte insuffisance']) == False]
+        [TOTAL_COMPTE, 'Solde compte excédent', 'Solde compte insuffisance']) == False]
     df_operation_courante = df_operation_courante.sort_values('Libellé')
 
     df_copro = df_entre.loc[df_entre['Compte'].isin(liste_cpt_copro)]
