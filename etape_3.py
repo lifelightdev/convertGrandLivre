@@ -116,7 +116,7 @@ def etape_3_file_compte_s(df_entre, nom_syndic, date_impression, liste_cpt_copro
     worksheet.set_column('E:E', 6)  # Journal
     worksheet.set_column('F:F', max_size_libelle)  # Libellé
     worksheet.set_column('G:G', 13)  # Facture
-    worksheet.set_column('H:I', 13, number_format)
+    worksheet.set_column('H:K', 13, number_format)
 
     for index in df_sortie.index:
         if (df_sortie["Libellé"][index] == "Total du copropriétaire") \

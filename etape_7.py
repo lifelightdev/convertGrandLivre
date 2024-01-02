@@ -12,39 +12,50 @@ def etape_7_tresorerie(df_sortie, nom_syndic, date_impression, arrete_au):
     df_grand_livre = df_sortie.sort_values('Pièce', ascending=True)
     piece = df_grand_livre.iloc[1]['Pièce']
     df_tresorerie = Entete_colonne
-    df_piece, nb_ligne_piece = creer_piece()
-    taille_tresorerie = 0
+    df_piece = Entete_colonne
 
     for index in df_grand_livre.index:
         if existe_piece(piece):
             if change_piece(piece, df_grand_livre, index):
                 if trouve_compte_banque(df_piece):
-                    df_tresorerie, taille_tresorerie = ajoute_piece_dans_tresorerie(df_piece, df_tresorerie,
-                                                                                    taille_tresorerie)
+                    df_piece = df_piece.sort_values('Compte', ascending=True)
+                    df_piece.loc[df_piece.size + 1] = ["", "", piece, "", "", "Total de la pièce", "", "", "-1", "-1",
+                                                       "-1"]
+                    df_piece.reset_index(drop=True, inplace=True)
+                    df_tresorerie = pandas.concat([df_tresorerie, df_piece], ignore_index=True)
+                    df_tresorerie.reset_index(drop=True, inplace=True)
                 df_piece.drop(df_piece.index, inplace=True)
-                df_piece, nb_ligne_piece = creer_piece()
-            df_piece.loc[nb_ligne_piece] = [df_grand_livre["Compte"][index],
-                                            df_grand_livre["Intitulé du compte"][index], df_grand_livre["Pièce"][index],
-                                            df_grand_livre["Date"][index], df_grand_livre["Journal"][index],
-                                            df_grand_livre["Libellé"][index], df_grand_livre["Contre partie"][index],
-                                            df_grand_livre["N° chèque"][index], df_grand_livre["Débit"][index],
-                                            df_grand_livre["Crédit"][index], 0]
-            nb_ligne_piece = nb_ligne_piece + 1
+            df_piece.loc[df_piece.size + 1] = [df_grand_livre["Compte"][index],
+                                               df_grand_livre["Intitulé du compte"][index],
+                                               df_grand_livre["Pièce"][index],
+                                               df_grand_livre["Date"][index], df_grand_livre["Journal"][index],
+                                               df_grand_livre["Libellé"][index], df_grand_livre["Contre partie"][index],
+                                               df_grand_livre["N° chèque"][index], df_grand_livre["Débit"][index],
+                                               df_grand_livre["Crédit"][index], -1]
         piece = df_grand_livre['Pièce'][index]
+
+    total_piece_debit = 0
+    total_piece_credit = 0
+    df_tresorerie.reset_index(drop=True, inplace=True)
+    for i in df_tresorerie.index:
+        df_tresorerie['Solde'][i] = calcul_solde(i)
+        if df_tresorerie['Libellé'][i] == 'Total de la pièce':
+            df_tresorerie['Débit'][i] = total_piece_debit
+            df_tresorerie['Crédit'][i] = total_piece_credit
+            total_piece_debit = 0
+            total_piece_credit = 0
+        else:
+            total_piece_debit = float(total_piece_debit) + float(df_tresorerie['Débit'][i])
+            total_piece_credit = float(total_piece_credit) + float(df_tresorerie['Crédit'][i])
+    i = i + 1
 
     write_tresorerie(df_tresorerie, nom_syndic, date_impression, arrete_au)
     fin = datetime.today()
     print(f"Fin de l'étape 7 (Trésorerie) en {fin - debut}")
 
 
-def creer_piece():
-    df_piece = Entete_colonne
-    nb_ligne_piece = 0
-    return df_piece, nb_ligne_piece
-
-
 def existe_piece(piece):
-    return not (piece == '')
+    return piece != ''
 
 
 def change_piece(piece, df_grand_livre, index):
@@ -53,21 +64,6 @@ def change_piece(piece, df_grand_livre, index):
 
 def piece_trouvee(nb_ligne_piece):
     return nb_ligne_piece > 0
-
-
-def ajoute_piece_dans_tresorerie(df_piece, df_tresorerie, taille_tresorerie):
-    new_tresorerie = df_tresorerie.copy()
-    for index_piece in range(len(df_piece)):
-        new_tresorerie.loc[taille_tresorerie] = [df_piece["Compte"][index_piece],
-                                                 df_piece["Intitulé du compte"][index_piece],
-                                                 df_piece["Pièce"][index_piece], df_piece["Date"][index_piece],
-                                                 df_piece["Journal"][index_piece], df_piece["Libellé"][index_piece],
-                                                 df_piece["Contre partie"][index_piece],
-                                                 df_piece["N° chèque"][index_piece], df_piece["Débit"][index_piece],
-                                                 df_piece["Crédit"][index_piece],
-                                                 calcul_solde(len(df_tresorerie), index_piece)]
-        taille_tresorerie = taille_tresorerie + 1
-    return new_tresorerie, taille_tresorerie
 
 
 def trouve_compte_banque(df_piece):
@@ -100,18 +96,19 @@ def write_tresorerie(df_tresorerie, nom_syndic, date_impression, arrete_au):
     worksheet.set_column('F:F', max_size_libelle)  # Libellé
     worksheet.set_column('G:G', 13)  # Contre partie
     worksheet.set_column('H:H', 13)  # N° chèque
-    worksheet.set_column('I:L', 13, number_format)
+    worksheet.set_column('I:L', 13, number_format)  # I = Débit J = Crédit et K = Solde
 
     for index in df_tresorerie.index:
-        piece = df_tresorerie['Pièce'][index]
-        if piece != df_tresorerie['Pièce'][index]:
-            worksheet.set_row(index - 1, cell_format=cell_format)
+        if index > 0:
+            worksheet.write_array_formula(f'K{index + 1}', f'{df_tresorerie["Solde"][index]}', number_format, 2005)
+        if df_tresorerie['Libellé'][index] == 'Total de la pièce':
+            worksheet.set_row(index + 1, cell_format=cell_format)
 
     workbook.close()
 
 
-def calcul_solde(debut, index_piece):
-    if index_piece == 0 or debut == 0:
-        return f'=I{(debut)}-J{(debut)}'
+def calcul_solde(ligne):
+    if ligne == 1:
+        return f'=J{ligne + 1}-I{ligne + 1}'
     else:
-        return f'=K{(debut)}+I{(debut + 1)}-J{(debut + 1)}'
+        return f'=K{(ligne)}+J{ligne + 1}-I{ligne + 1}'

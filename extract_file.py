@@ -8,13 +8,6 @@ table_settings_ligne = {"vertical_strategy": "lines",
                         "explicit_vertical_lines": [],
                         "explicit_horizontal_lines": []}
 
-table_settings_colonne = {"vertical_strategy": "lines",
-                          "horizontal_strategy": "lines",
-                          "explicit_vertical_lines": [],
-                          "explicit_horizontal_lines": [],
-                          "intersection_tolerance": 2
-                          }
-
 
 def extract_file(my_file: str, copro: str):
     debut = datetime.today()

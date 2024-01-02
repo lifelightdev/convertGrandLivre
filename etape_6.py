@@ -15,6 +15,8 @@ def etape_6_journaux(df_sortie, nom_syndic, date_impression, arrete_au, copro):
     df_journal = df_new_journal(copro)
     for index in df_journaux.index:
         if journal != df_journaux["Journal"][index]:
+            df_journal = df_journal.sort_values('Date', ascending=True)
+            df_journal = df_journal.sort_values('Pièce', ascending=True)
             index_nb_ligne_journal, df_journal = add_total(df_journal, index_nb_ligne_journal, copro)
             write_journal(df_journal, index_nb_ligne_journal, journal, nom_syndic, date_impression, arrete_au, copro)
             journal = df_journaux["Journal"][index]
