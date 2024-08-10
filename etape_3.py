@@ -133,7 +133,7 @@ def etape_3_file_compte_s(df_entre, nom_syndic, date_impression, liste_cpt_copro
             worksheet.set_row(index + 1, cell_format=cell_format)
     writer.close()
     fin = datetime.today()
-    print(f"Fin de l'étape 4 (Création du fichier des comptes 461900 et 462900 ) en {fin - debut}")
+    print(f"Fin de l'étape 3 (Création du fichier des comptes 461900 et 462900 ) en {fin - debut}")
 
 
 def delete_civilite(libelle):

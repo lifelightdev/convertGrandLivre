@@ -70,48 +70,49 @@ def copro_n(pages, liste_compte):
                     nb_ligne_sortie = nb_ligne_sortie + 1
             else:
                 if not is_ligne_null(ligne):
-                    if ligne[13] is not None:
-                        if ligne[13].startswith('Total compte '):
-                            compte = ligne[13].replace('Total compte ', '')
-                            debit = zero_if_empty(ligne[len(ligne) - 7])
-                            credit = zero_if_empty(ligne[len(ligne) - 5])
-                            if (ligne[20] is not None) and ligne[20].startswith('(Solde créditeur : -'):
+                    if len(ligne) > 13:
+                        if ligne[13] is not None:
+                            if ligne[13].startswith('Total compte '):
+                                compte = ligne[13].replace('Total compte ', '')
+                                debit = zero_if_empty(ligne[len(ligne) - 7])
+                                credit = zero_if_empty(ligne[len(ligne) - 5])
+                                if (ligne[20] is not None) and ligne[20].startswith('(Solde créditeur : -'):
+                                    solde_debit = zero_if_empty('')
+                                    solde_credit = zero_if_empty(ligne[20].replace('(Solde créditeur : -', '')
+                                                                          .replace(')', ''))
+                                if (ligne[20] is not None) and ligne[20].startswith('(Solde débiteur : '):
+                                    solde_debit =  zero_if_empty(ligne[20].replace('(Solde débiteur : ', '')
+                                                                          .replace(')', ''))
+                                    solde_credit = zero_if_empty('')
+                                df_sortie.loc[nb_ligne_sortie] = [compte, "", "", "", "", TOTAL_COMPTE, "", "", debit,
+                                                                  credit, solde_debit, solde_credit, "", ""]
+                                nb_ligne_sortie = nb_ligne_sortie + 1
+                            elif ligne[13].startswith('Total immeuble'):
+                                debit = zero_if_empty(ligne[len(ligne) - 7])
+                                credit = zero_if_empty(ligne[len(ligne) - 5])
                                 solde_debit = zero_if_empty('')
-                                solde_credit = zero_if_empty(ligne[20].replace('(Solde créditeur : -', '')
-                                                                      .replace(')', ''))
-                            if (ligne[20] is not None) and ligne[20].startswith('(Solde débiteur : '):
-                                solde_debit =  zero_if_empty(ligne[20].replace('(Solde débiteur : ', '')
-                                                                      .replace(')', ''))
                                 solde_credit = zero_if_empty('')
-                            df_sortie.loc[nb_ligne_sortie] = [compte, "", "", "", "", TOTAL_COMPTE, "", "", debit,
-                                                              credit, solde_debit, solde_credit, "", ""]
-                            nb_ligne_sortie = nb_ligne_sortie + 1
-                        elif ligne[13].startswith('Total immeuble'):
-                            debit = zero_if_empty(ligne[len(ligne) - 7])
-                            credit = zero_if_empty(ligne[len(ligne) - 5])
+                                df_sortie.loc[nb_ligne_sortie] = ["", "", "", "", "", "Total immeuble", "", "", debit,
+                                                                  credit, solde_debit, solde_credit, "", ""]
+                                nb_ligne_sortie = nb_ligne_sortie + 1
+                        elif ligne[14] is not None:
                             solde_debit = zero_if_empty('')
                             solde_credit = zero_if_empty('')
-                            df_sortie.loc[nb_ligne_sortie] = ["", "", "", "", "", "Total immeuble", "", "", debit,
-                                                              credit, solde_debit, solde_credit, "", ""]
-                            nb_ligne_sortie = nb_ligne_sortie + 1
-                    elif ligne[14] is not None:
-                        solde_debit = zero_if_empty('')
-                        solde_credit = zero_if_empty('')
-                        if ligne[14].startswith('Total compte '):
-                            compte = ligne[14].replace('Total compte ', '')
-                            debit = zero_if_empty(ligne[len(ligne) - 7])
-                            credit = zero_if_empty(ligne[len(ligne) - 5])
-                            if (ligne[21] is not None) and ligne[21].startswith('(Solde créditeur : -'):
-                                solde_debit = zero_if_empty('')
-                                solde_credit = zero_if_empty(ligne[21].replace('(Solde créditeur : -', '')
-                                                                      .replace(')', ''))
-                            if (ligne[21] is not None) and ligne[21].startswith('(Solde débiteur : '):
-                                solde_debit =  zero_if_empty(ligne[21].replace('(Solde débiteur : ', '')
-                                                                      .replace(')', ''))
-                                solde_credit = zero_if_empty('')
-                            df_sortie.loc[nb_ligne_sortie] = [compte, "", "", "", "", TOTAL_COMPTE, "", "", debit,
-                                                              credit, solde_debit, solde_credit, "", ""]
-                            nb_ligne_sortie = nb_ligne_sortie + 1
+                            if ligne[14].startswith('Total compte '):
+                                compte = ligne[14].replace('Total compte ', '')
+                                debit = zero_if_empty(ligne[len(ligne) - 7])
+                                credit = zero_if_empty(ligne[len(ligne) - 5])
+                                if (ligne[21] is not None) and ligne[21].startswith('(Solde créditeur : -'):
+                                    solde_debit = zero_if_empty('')
+                                    solde_credit = zero_if_empty(ligne[21].replace('(Solde créditeur : -', '')
+                                                                          .replace(')', ''))
+                                if (ligne[21] is not None) and ligne[21].startswith('(Solde débiteur : '):
+                                    solde_debit =  zero_if_empty(ligne[21].replace('(Solde débiteur : ', '')
+                                                                          .replace(')', ''))
+                                    solde_credit = zero_if_empty('')
+                                df_sortie.loc[nb_ligne_sortie] = [compte, "", "", "", "", TOTAL_COMPTE, "", "", debit,
+                                                                  credit, solde_debit, solde_credit, "", ""]
+                                nb_ligne_sortie = nb_ligne_sortie + 1
     return df_sortie
 
 def extract_libelle_ecriture(libelle_ecriture):
@@ -227,7 +228,7 @@ def est_entete_de_colonne(file, ligne, page):
 def zero_if_empty(montant):
     if montant == '' or montant is None or not montant.isnumeric():
         if not montant.isnumeric():
-            if not montant.replace('.', '').replace('€', '').replace('-', '').replace(' ', '').isnumeric():
+            if not montant.replace('.', '').replace('€', '').replace('-', '').replace(' ', '').replace(',', '').isnumeric():
                 return convert_montant('0,00')
             else:
                 return convert_montant(montant)

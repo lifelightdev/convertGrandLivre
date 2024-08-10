@@ -25,7 +25,7 @@ def etape_5_write_file_grand_livre(df_sortie, date_impression, nom_syndic, arret
     cell_format = workbook.add_format({'bold': True, 'num_format': '#,##0.00'})
     text_format = workbook.add_format({'num_format': '@'})
     for index in ids_ligne_totaux:
-         worksheet.set_row(index, None, cell_format)
+        worksheet.set_row(index, None, cell_format)
     worksheet.set_column('A:A', 15, text_format)  # Compte
     worksheet.set_column('B:B', max_size_compte)  # Intitulé du compte
     worksheet.set_column('C:C', 13)  # Piéce

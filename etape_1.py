@@ -60,6 +60,16 @@ def compte_n(df_liste_compte, text):
                         libelle = libelle.replace('*********************************', '')
                         libelle = libelle.replace('****************', '')
                         libelle = libelle.replace('*****', ' ')
+                        libelle = libelle.replace('****', ' ')
+                        libelle = libelle.replace('***', ' ')
+                        libelle = libelle.replace('**', ' ')
+                        libelle = libelle.lstrip()
+                        df_liste_compte.loc[df_liste_compte.size] = [compte, libelle]
+            elif len(text) == 6:
+                if text[1] != '':
+                    if text[1] is not None:
+                        compte = text[1]
+                        libelle = text[3]
                         df_liste_compte.loc[df_liste_compte.size] = [compte, libelle]
     return df_liste_compte
 
